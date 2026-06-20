@@ -112,17 +112,18 @@ export default function Home() {
 
       {/* ── PERSISTENT HUD NAVIGATION ── */}
       <nav>
-        <NavLogo />
+        <a href="/" className="cursor-pointer hover:opacity-80 transition-opacity">
+          <NavLogo />
+        </a>
         <div className="nav-links hidden md:flex">
-          <a href="#vision">VISION</a>
-          <a href="#land">LAND</a>
-          <a href="#create">CREATE</a>
-          <a href="#earn">EARN</a>
-          <a href="#economy">ECONOMY</a>
-          <a href="#ecosystem">ECOSYSTEM</a>
-          <a href="#roadmap">ROADMAP</a>
+          <a href="/about">ABOUT</a>
+          <a href="/roadmap">ROADMAP</a>
+          <a href="/token">TOKEN</a>
+          <a href="/whitepaper">WHITEPAPER</a>
+          <a href="/founder">FOUNDER</a>
         </div>
       </nav>
+
 
       {/* ── DOM CONTENT OVERLAY ── */}
       <div className="scroll-wrapper">
