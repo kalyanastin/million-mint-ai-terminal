@@ -340,6 +340,52 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     const earthGroup = createPlanet("earth");
     scene.add(earthGroup);
 
+    // Space Elevator Cable and Climbers
+    const elevatorGroup = new THREE.Group();
+    const cableGeom = new THREE.CylinderGeometry(0.015, 0.015, 45, 8);
+    const cableMat = new THREE.MeshStandardMaterial({
+      color: 0x555555,
+      metalness: 0.9,
+      roughness: 0.1,
+      transparent: true,
+      opacity: 0.6
+    });
+    const cable = new THREE.Mesh(cableGeom, cableMat);
+    cable.position.set(0, 0, 0); // centered at Earth, going up and down
+    elevatorGroup.add(cable);
+
+    // Add climber pods at various heights
+    const climberGeom = new THREE.CylinderGeometry(0.08, 0.08, 0.12, 12);
+    const climberMat = new THREE.MeshStandardMaterial({
+      color: 0xffaa00,
+      metalness: 0.9,
+      roughness: 0.2
+    });
+    const climbers: THREE.Mesh[] = [];
+    const heights = [-15, -5, 5, 15];
+    heights.forEach((h) => {
+      const climber = new THREE.Mesh(climberGeom, climberMat);
+      climber.position.set(0, h, 0);
+      elevatorGroup.add(climber);
+      climbers.push(climber);
+    });
+
+    scene.add(elevatorGroup);
+
+    // Animating the climbers up and down the cable
+    elevatorGroup.userData = {
+      update: (time: number, delta: number, prefersReducedMotion?: boolean) => {
+        if (prefersReducedMotion) return;
+        climbers.forEach((climber, idx) => {
+          const speed = 0.05 + idx * 0.01;
+          let newY = climber.position.y + speed * delta * ((idx % 2 === 0) ? 1 : -1);
+          if (newY > 22) newY = -22;
+          if (newY < -22) newY = 22;
+          climber.position.y = newY;
+        });
+      }
+    };
+
     // Hubble Space Telescope
     const satellite = createSatellite();
     satellite.position.set(12, 1, 0);
@@ -352,30 +398,128 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     iss.scale.set(0.6, 0.6, 0.6);
     scene.add(iss);
 
-    // Stage 2: Moon
+    // Stage 2: Moon & Orbital Research Network
     const moonGroup = createPlanet("moon");
     moonGroup.position.set(12, 5, -22);
     scene.add(moonGroup);
 
-    // Stage 3: Genesis Planet
-    const genesisGroup = createPlanet("genesis");
-    genesisGroup.position.set(18, 0, -45);
-    scene.add(genesisGroup);
+    const researchGroup = new THREE.Group();
+    researchGroup.position.set(15, 3, -25);
+    
+    // Core lab module
+    const labCore = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.5, 0.5, 2.5, 12),
+      new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8, roughness: 0.2 })
+    );
+    labCore.rotation.x = Math.PI / 2;
+    researchGroup.add(labCore);
 
-    // Stage 5: Asteroid Belt
+    // Large research solar wings
+    const solarWingMat = new THREE.MeshStandardMaterial({ color: 0x0055ff, metalness: 0.8 });
+    [-1.2, 1.2].forEach((side) => {
+      const panel = new THREE.Mesh(
+        new THREE.BoxGeometry(1.8, 0.02, 0.8),
+        solarWingMat
+      );
+      panel.position.set(side, 0, 0);
+      researchGroup.add(panel);
+    });
+
+    // Flashing research signal light
+    const researchBeacon = new THREE.Mesh(
+      new THREE.SphereGeometry(0.12, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0x00ffc8 })
+    );
+    researchBeacon.position.set(0, 0.8, 0);
+    researchGroup.add(researchBeacon);
+
+    researchGroup.userData = {
+      update: (time: number, delta: number, prefersReducedMotion?: boolean) => {
+        const pulse = Math.sin(time * 6.0) > 0.0;
+        (researchBeacon.material as THREE.MeshBasicMaterial).color.setHex(pulse ? 0x00ffc8 : 0x002211);
+        if (prefersReducedMotion) return;
+        researchGroup.rotation.y = time * 0.05;
+      }
+    };
+    scene.add(researchGroup);
+
+    // Additional telescope in the array
+    const hubble2 = createSatellite();
+    hubble2.position.set(9, 4, -26);
+    hubble2.scale.set(0.45, 0.45, 0.45);
+    scene.add(hubble2);
+
+    // Stage 3: Resource Extraction Zone (Asteroid Belt & Mining)
     const { group: asteroidBelt, update: updateBelt } = createAsteroidBelt();
     asteroidBelt.position.set(0, 0, -90);
     scene.add(asteroidBelt);
 
-    // Stage 6: MMINT Orbital Gateway
+    // Mining Laser Beams
+    const laserMat = new THREE.LineBasicMaterial({
+      color: 0x00ffc8,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending
+    });
+    
+    const laserPoints1 = [
+      new THREE.Vector3(0, 3.0 + 0.1, -92), // depot relative
+      new THREE.Vector3(-10, -1, -85)      // rock 1 relative
+    ];
+    const laserGeom1 = new THREE.BufferGeometry().setFromPoints(laserPoints1);
+    const laser1 = new THREE.Line(laserGeom1, laserMat);
+    scene.add(laser1);
+
+    const laserPoints2 = [
+      new THREE.Vector3(0, 3.0 + 0.1, -92),
+      new THREE.Vector3(8, 2, -96)
+    ];
+    const laserGeom2 = new THREE.BufferGeometry().setFromPoints(laserPoints2);
+    const laser2 = new THREE.Line(laserGeom2, laserMat);
+    scene.add(laser2);
+
+    laser1.userData = {
+      update: (time: number, delta: number, prefersReducedMotion?: boolean) => {
+        if (prefersReducedMotion) {
+          laser1.visible = true;
+          laser2.visible = true;
+          return;
+        }
+        laser1.visible = Math.sin(time * 25.0) > -0.2;
+        laser2.visible = Math.cos(time * 18.0) > -0.3;
+      }
+    };
+
+    // Stage 4: MMINT Trade Hub (Space Shipyard)
     const shipyard = createSpaceShipyard();
     shipyard.position.set(24, 0, -135);
     shipyard.rotation.y = -Math.PI / 6;
     scene.add(shipyard);
 
+    // Stage 5: MMINT Orbital Gateway (Habitat Ring scaled up at [0, 0, -175])
+    const habitatRing = createHabitatRing();
+    habitatRing.scale.setScalar(2.2);
+    habitatRing.position.set(0, 0, -175);
+    scene.add(habitatRing);
+
+    habitatRing.userData = {
+      update: (time: number, delta: number, prefersReducedMotion?: boolean) => {
+        habitatRing.children.forEach(c => {
+          if (c.userData.update) c.userData.update(time, delta, prefersReducedMotion);
+        });
+        if (prefersReducedMotion) return;
+        habitatRing.rotation.y = time * 0.035;
+      }
+    };
+
+    // Stage 6: Genesis Planet relocated to [18, 0, -220]
+    const genesisGroup = createPlanet("genesis");
+    genesisGroup.position.set(18, 0, -220);
+    scene.add(genesisGroup);
+
     // Stage 7: MMINT Creator Fleet
     const fleet = createSpacecraftFleet();
-    fleet.position.set(0, 0, -175);
+    fleet.position.set(0, 0, -250);
     scene.add(fleet);
 
     // ── MMINT COMMUNICATION NETWORK (32 Relay Satellites Orbiting Earth) ──
@@ -423,52 +567,37 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
       }
     }
 
-    // ── MMINT HABITAT RING (Rotating Stanford Torus orbiting Genesis) ──
-    const habitatRing = createHabitatRing();
-    habitatRing.scale.setScalar(0.7);
-    scene.add(habitatRing);
-
-    habitatRing.userData = {
-      update: (time: number, delta: number, prefersReducedMotion?: boolean) => {
-        // Run station rotation update
-        habitatRing.children.forEach(c => {
-          if (c.userData.update) c.userData.update(time, delta, prefersReducedMotion);
-        });
-
-        // Orbit Genesis at [18, 0, -45]
-        const speed = prefersReducedMotion ? 0.012 : 0.035;
-        const radius = 13.0;
-        const angle = time * speed;
-        
-        habitatRing.position.set(
-          18 + Math.cos(angle) * radius,
-          Math.sin(angle * 0.45) * 2.0,
-          -45 + Math.sin(angle) * radius
-        );
-        habitatRing.rotation.y = time * 0.05;
-      }
-    };
-
     // ── GLOWING TRANSIT LANES (Communication/Cargo Corridors) ──
     const routes = [
       createGlowingRoute([
         new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(-2, 1, -2),
-        new THREE.Vector3(-6, 2, -5)
-      ], 0x3388ff), // Earth to ISS (blue)
+        new THREE.Vector3(6, 2, -10),
+        new THREE.Vector3(15, 3, -25)
+      ], 0x3388ff), // Earth to Research Network (blue)
 
       createGlowingRoute([
-        new THREE.Vector3(-6, 2, -5),
-        new THREE.Vector3(5, 5, -50),
-        new THREE.Vector3(15, 3, -100),
+        new THREE.Vector3(15, 3, -25),
+        new THREE.Vector3(8, 3, -60),
+        new THREE.Vector3(0, 3, -92)
+      ], 0x00ffcc), // Research Network to Asteroid Depot (teal)
+
+      createGlowingRoute([
+        new THREE.Vector3(0, 3, -92),
+        new THREE.Vector3(12, 1, -115),
         new THREE.Vector3(24, 0, -135)
-      ], 0x00ffcc), // ISS to Gateway (teal)
+      ], 0xffaa00), // Asteroid Depot to Trade Hub (orange)
 
       createGlowingRoute([
         new THREE.Vector3(24, 0, -135),
-        new THREE.Vector3(26, -5, -90),
-        new THREE.Vector3(18, 0, -45)
-      ], 0xffaa00) // Gateway to Genesis (orange)
+        new THREE.Vector3(12, 0, -155),
+        new THREE.Vector3(0, 0, -175)
+      ], 0x00ffcc), // Trade Hub to Orbital Gateway (teal)
+
+      createGlowingRoute([
+        new THREE.Vector3(0, 0, -175),
+        new THREE.Vector3(9, 0, -195),
+        new THREE.Vector3(18, 0, -220)
+      ], 0xffaa00) // Orbital Gateway to Genesis (orange)
     ];
     routes.forEach(route => scene.add(route));
 
@@ -511,30 +640,28 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     ], createMaintenanceDrone, 0.08);
 
     spawnTrafficShip([
-      new THREE.Vector3(-6, 2, -5),
-      new THREE.Vector3(5, 5, -50),
-      new THREE.Vector3(15, 3, -100),
-      new THREE.Vector3(24, 0, -135)
-    ], createOrbitalFerry, 0.02);
+      new THREE.Vector3(15, 3, -25),
+      new THREE.Vector3(8, 3, -60),
+      new THREE.Vector3(0, 3, -92)
+    ], createOrbitalFerry, 0.025);
 
     spawnTrafficShip([
-      new THREE.Vector3(-6, 2, -5),
-      new THREE.Vector3(5, 5, -50),
-      new THREE.Vector3(15, 3, -100),
+      new THREE.Vector3(0, 3, -92),
+      new THREE.Vector3(12, 1, -115),
       new THREE.Vector3(24, 0, -135)
-    ], createCargoShip, 0.015);
-
-    spawnTrafficShip([
-      new THREE.Vector3(24, 0, -135),
-      new THREE.Vector3(26, -5, -90),
-      new THREE.Vector3(18, 0, -45)
     ], createCargoShip, 0.018);
 
     spawnTrafficShip([
       new THREE.Vector3(24, 0, -135),
-      new THREE.Vector3(26, -5, -90),
-      new THREE.Vector3(18, 0, -45)
-    ], createPassengerShuttle, 0.03);
+      new THREE.Vector3(12, 0, -155),
+      new THREE.Vector3(0, 0, -175)
+    ], createCargoShip, 0.02);
+
+    spawnTrafficShip([
+      new THREE.Vector3(0, 0, -175),
+      new THREE.Vector3(9, 0, -195),
+      new THREE.Vector3(18, 0, -220)
+    ], createPassengerShuttle, 0.035);
 
     // Stage 8: Jupiter
     const jupiterGroup = createPlanet("jupiter");
@@ -554,14 +681,14 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     // 9. Camera spring-dynamics paths (All aligned to keep Earth visible, with route-specific centerpieces)
     const pathPoints = [
       { pos: [0, 8, -20], target: [0, 0, 0] },           // 0: Hero (Behind Earth closeup)
-      { pos: [9, 5.5, -12], target: [12, 5, -22] },       // 1: Vision (Moon closeup)
-      { pos: [-7, 3, -8], target: [-6, 2, -5] },         // 2: Land/About (ISS & Earth Horizon)
-      { pos: [15, 6, -30], target: [18, 0, -45] },       // 3: Create/Genesis (Volcanic Genesis Planet)
-      { pos: [20, 2, -125], target: [24, 0, -135] },     // 4: Earn/Token (MMINT Gateway & Earth)
-      { pos: [5, 2, -158], target: [0, 0, -175] },       // 5: Economy/Fleet (Creator fleet & Earth)
-      { pos: [-12, 10, -12], target: [0, 0, 0] },        // 6: Ecosystem/Whitepaper (Earth Rayleigh Scattering)
-      { pos: [6, 4, -18], target: [0, 0, 0] },           // 7: Roadmap (Earth-Moon orbit focus)
-      { pos: [0, 15, -22], target: [0, 0, 0] }           // 8: Final/Founder (Observatory Earth Lookback)
+      { pos: [-8, 3, -12], target: [-6, 2, -5] },        // 1: Section 01 (Earth Orbit / ISS)
+      { pos: [12, 6, -18], target: [15, 3, -25] },       // 2: Section 02 (Research Network near Moon)
+      { pos: [2, 4, -80], target: [0, 0, -90] },         // 3: Section 03 (Resource Extraction / Asteroids)
+      { pos: [20, 2, -125], target: [24, 0, -135] },     // 4: Section 04 (MMINT Trade Hub / Shipyard)
+      { pos: [0, 4, -165], target: [0, 0, -175] },       // 5: Section 05 (MMINT Orbital Gateway)
+      { pos: [14, 6, -210], target: [18, 0, -220] },     // 6: Section 06 (Genesis Planet Closeup)
+      { pos: [-25, 12, -120], target: [0, 0, -120] },    // 7: Section 07 (Future Civilizations Panoramic Overview)
+      { pos: [0, 25, -35], target: [0, 0, 0] }           // 8: Final/Founder (Lookback)
     ];
 
     const currentPos = new THREE.Vector3(0, 10, -20);

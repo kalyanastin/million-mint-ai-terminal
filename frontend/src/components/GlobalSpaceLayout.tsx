@@ -16,17 +16,17 @@ export function GlobalSpaceLayout({ children }: { children: React.ReactNode }) {
   // Sync route path to background progress
   useEffect(() => {
     if (pathname === "/about") {
-      setProgress(2.0); // ISS & Earth horizon
+      setProgress(2.0); // Section 02: Orbital Research Network
     } else if (pathname === "/founder") {
-      setProgress(8.0); // Observatory lookback
+      setProgress(8.0); // Cinematic Lookback / Final
     } else if (pathname === "/planet/genesis") {
-      setProgress(3.0); // Volcanic Genesis planet
+      setProgress(6.0); // Section 06: Genesis Planet
     } else if (pathname === "/roadmap") {
-      setProgress(7.0); // Earth-Moon orbit focus
+      setProgress(7.0); // Section 07: Future Civilizations
     } else if (pathname === "/token") {
-      setProgress(4.0); // MMINT Gateway and Earth
+      setProgress(4.0); // Section 04: MMINT Trade Hub
     } else if (pathname === "/whitepaper") {
-      setProgress(6.0); // Rayleigh scattering atmospheric glow
+      setProgress(5.0); // Section 05: MMINT Orbital Gateway
     }
   }, [pathname]);
 

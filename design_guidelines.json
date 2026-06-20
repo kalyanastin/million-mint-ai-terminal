@@ -1,0 +1,58 @@
+{
+  "project": "Million Mint 3D Civilization",
+  "locations_mapping": {
+    "section_01_earth_orbit": "Earth Orbit & Space Elevators",
+    "section_02_research_network": "Orbital Research Network",
+    "section_03_resource_extraction": "Resource Extraction Zone",
+    "section_04_trade_hub": "MMINT Trade Hub",
+    "section_05_orbital_gateway": "MMINT Orbital Gateway",
+    "section_06_genesis_planet": "Genesis Planet Colony",
+    "section_07_future_civilizations": "Future Civilizations"
+  },
+  "design_system": {
+    "archetype_blend": [
+      "Archetype 5: Luxury/Cinematic",
+      "Archetype 4: High-Contrast/Swiss"
+    ],
+    "aesthetic": "Star Citizen / The Expanse / Interstellar HUD",
+    "color_palette": {
+      "nasa_blue": "#0A192F",
+      "expanse_amber": "#FFB703",
+      "deep_space_void": "#000000"
+    },
+    "typography": {
+      "headings": "Rajdhani",
+      "mono": "JetBrains Mono"
+    },
+    "hud_ui_patterns": [
+      "clip-paths",
+      "targeting_brackets",
+      "scan lines"
+    ]
+  },
+  "react_three_fiber_specs": {
+    "earth": {
+      "realism": true,
+      "rayleigh_scattering": true,
+      "textures": {
+        "day": "earth-day",
+        "night": "earth-night",
+        "specular": "earth-specular"
+      }
+    },
+    "orbital_mechanics": {
+      "dynamic_orbits": true,
+      "moon_rotation": true,
+      "planetary_drift": true
+    },
+    "lighting": {
+      "sun_intensity": 3.5,
+      "ambient_color": "#111122",
+      "tone_mapping": "ACESFilmicToneMapping"
+    }
+  },
+  "anti_patterns_prevented": [
+    "no purple gradients",
+    "no glassmorphism"
+  ]
+}
