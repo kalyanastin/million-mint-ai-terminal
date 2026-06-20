@@ -7,7 +7,7 @@ export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-if (!supabase) {
+if (!supabase && process.env.NODE_ENV === "development") {
   console.warn(
     "[Million Mint] Supabase environment variables are missing. Waitlist system will fall back to local client-side persistence (localStorage)."
   );

@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = ["", "/about", "/roadmap", "/token", "/whitepaper", "/founder", "/planet/genesis", "/admin/waitlist"];
+  const routes = ["", "/about", "/roadmap", "/token", "/whitepaper", "/founder", "/planet/genesis"];
   return routes.map((route) => ({
     url: `https://millionmint.space${route}`,
     lastModified: new Date(),
@@ -9,5 +9,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: route === "" ? 1.0 : 0.8,
   }));
 }
+
 
 

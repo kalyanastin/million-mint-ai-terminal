@@ -18,8 +18,13 @@ export function WaitlistModal({ isOpen, onClose, onSuccess }: WaitlistModalProps
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [totalExplorers, setTotalExplorers] = useState(8420); // Baseline explorer count
+  const [supabaseCount, setSupabaseCount] = useState<number | null>(null);
   const [isFallbackMode, setIsFallbackMode] = useState(false);
+  const [isDev, setIsDev] = useState(false);
+
+  useEffect(() => {
+    setIsDev(process.env.NODE_ENV === "development");
+  }, []);
 
   // Sync count on mount and update
   useEffect(() => {
@@ -33,32 +38,18 @@ export function WaitlistModal({ isOpen, onClose, onSuccess }: WaitlistModalProps
             .select("*", { count: "exact", head: true });
           
           if (!error && count !== null) {
-            setTotalExplorers(8420 + count);
+            setSupabaseCount(count);
             setIsFallbackMode(false);
           } else {
-            throw new Error("Supabase count query failed");
+            throw new Error("Supabase query error");
           }
         } catch (err) {
-          console.warn("Could not query Supabase, using localStorage count:", err);
-          loadLocalCount();
+          setSupabaseCount(null);
+          setIsFallbackMode(true);
         }
       } else {
-        loadLocalCount();
-      }
-    };
-
-    const loadLocalCount = () => {
-      setIsFallbackMode(true);
-      const localData = localStorage.getItem("mm_airdrop_waitlist");
-      if (localData) {
-        try {
-          const entries = JSON.parse(localData);
-          if (Array.isArray(entries)) {
-            setTotalExplorers(8420 + entries.length);
-          }
-        } catch (e) {
-          console.error("Failed to parse local waitlist:", e);
-        }
+        setSupabaseCount(null);
+        setIsFallbackMode(true);
       }
     };
 
@@ -93,7 +84,6 @@ export function WaitlistModal({ isOpen, onClose, onSuccess }: WaitlistModalProps
           .insert([newRecord]);
         
         if (error) {
-          // If table does not exist or schema is different, throw
           throw error;
         }
         
@@ -101,12 +91,10 @@ export function WaitlistModal({ isOpen, onClose, onSuccess }: WaitlistModalProps
         setIsSuccess(true);
         if (onSuccess) onSuccess();
       } else {
-        // Fallback to local storage persistence
         saveToLocalStorage(newRecord);
       }
     } catch (err: any) {
       console.warn("Supabase database error, attempting local storage fallback:", err);
-      // Try local storage fallback even if Supabase was configured but table is missing
       saveToLocalStorage(newRecord);
     } finally {
       setIsSubmitting(false);
@@ -122,7 +110,6 @@ export function WaitlistModal({ isOpen, onClose, onSuccess }: WaitlistModalProps
         if (!Array.isArray(entries)) entries = [];
       }
       
-      // Check duplicate email in local storage
       const emailExists = entries.some((e: any) => e.email === record.email);
       if (emailExists) {
         setErrorMessage("This email is already registered on the waitlist.");
@@ -132,8 +119,6 @@ export function WaitlistModal({ isOpen, onClose, onSuccess }: WaitlistModalProps
       entries.push(record);
       localStorage.setItem("mm_airdrop_waitlist", JSON.stringify(entries));
       
-      // Update explorer count immediately
-      setTotalExplorers(8420 + entries.length);
       setIsSuccess(true);
       if (onSuccess) onSuccess();
     } catch (e) {
@@ -160,9 +145,9 @@ export function WaitlistModal({ isOpen, onClose, onSuccess }: WaitlistModalProps
           &times;
         </button>
 
-        {isFallbackMode && (
-          <div className="mb-4 text-[9px] font-mono bg-zinc-900 border border-zinc-800 text-zinc-500 px-3 py-1.5 rounded flex items-center justify-between">
-            <span>⚙️ SYSTEM RUNNING IN PERSISTENCE FALLBACK (LOCAL STORAGE)</span>
+        {isDev && isFallbackMode && (
+          <div className="mb-4 text-[9px] font-mono bg-yellow-950/20 border border-yellow-900/40 text-yellow-400 px-3 py-2 rounded">
+            ⚠️ [DEV WARNING] Supabase is unconfigured or unavailable. Using localStorage fallback.
           </div>
         )}
 
@@ -180,15 +165,27 @@ export function WaitlistModal({ isOpen, onClose, onSuccess }: WaitlistModalProps
               </p>
             </div>
 
-            {/* Waitlist stats */}
-            <div className="bg-black/40 border border-zinc-800/50 p-4 rounded text-center mb-6">
-              <div className="text-2xl font-bold font-mono text-[#f5c842] tracking-wider">
-                {totalExplorers.toLocaleString()}
+            {/* Waitlist status/stats */}
+            {supabaseCount !== null ? (
+              <div className="bg-black/40 border border-zinc-800/50 p-4 rounded text-center mb-6">
+                <div className="text-2xl font-bold font-mono text-[#00ffc8] tracking-wider">
+                  {supabaseCount.toLocaleString()}
+                </div>
+                <div className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest mt-1">
+                  Verified Explorer Registrations
+                </div>
               </div>
-              <div className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest mt-1">
-                Explorers Registered Globally
+            ) : (
+              <div className="bg-black/40 border border-zinc-800/50 p-4 rounded text-center mb-6">
+                <div className="text-sm font-bold font-mono text-[#f5c842] tracking-widest uppercase">
+                  Genesis Airdrop Registration Open
+                </div>
+                <div className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest mt-1">
+                  Explorer Registration Active
+                </div>
               </div>
-            </div>
+            )}
+
 
             {errorMessage && (
               <div className="mb-4 text-xs font-mono bg-red-950/40 border border-red-900/60 text-red-400 p-3 rounded">
