@@ -1,0 +1,27 @@
+# Local environment files with secrets
+.env
+.env.local
+.env.deploy
+.env.vps
+backend/.env
+worker/.env
+
+# Node dependencies and builds
+node_modules/
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# Python environments and caches
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Operating system files
+.DS_Store
+Thumbs.db
