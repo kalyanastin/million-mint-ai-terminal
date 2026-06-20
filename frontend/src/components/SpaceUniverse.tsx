@@ -4,7 +4,18 @@ import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
 import { createPlanet } from "./PlanetSphere";
 import { createAsteroidBelt } from "./AsteroidBelt";
-import { createSpaceShipyard, createSpacecraftFleet, createSatellite, createISS } from "./SpacecraftFleet";
+import {
+  createSpaceShipyard,
+  createSpacecraftFleet,
+  createSatellite,
+  createISS,
+  createHabitatRing,
+  createRelaySatellite,
+  createPassengerShuttle,
+  createMaintenanceDrone,
+  createOrbitalFerry,
+  createCargoShip
+} from "./SpacecraftFleet";
 import { updateThrusterPlume } from "./ThrusterPlume";
 
 interface SpaceUniverseProps {
@@ -115,6 +126,35 @@ function createStarfieldTexture() {
   texture.generateMipmaps = false;
   
   return texture;
+}
+
+// ── GLOWING TRANSIT LANE CREATOR ──
+function createGlowingRoute(points: THREE.Vector3[], color: number) {
+  const curve = new THREE.CatmullRomCurve3(points);
+  const curvePoints = curve.getPoints(80);
+  const geometry = new THREE.BufferGeometry().setFromPoints(curvePoints);
+  
+  const material = new THREE.LineDashedMaterial({
+    color: color,
+    dashSize: 1.2,
+    gapSize: 0.8,
+    transparent: true,
+    opacity: 0.5,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+
+  const line = new THREE.Line(geometry, material);
+  line.computeLineDistances();
+  
+  line.userData = {
+    update: (time: number, delta: number, prefersReducedMotion?: boolean) => {
+      if (prefersReducedMotion) return;
+      (material as any).dashOffset = -time * 2.2;
+    }
+  };
+
+  return line;
 }
 
 export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
@@ -338,6 +378,164 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     fleet.position.set(0, 0, -175);
     scene.add(fleet);
 
+    // ── MMINT COMMUNICATION NETWORK (32 Relay Satellites Orbiting Earth) ──
+    const relaySatellites: THREE.Group[] = [];
+    const numPlanes = 4;
+    const satsPerPlane = 8;
+    const orbitRadius = 13.8;
+    const relayGroup = new THREE.Group();
+    scene.add(relayGroup);
+
+    for (let plane = 0; plane < numPlanes; plane++) {
+      const inclination = (plane / numPlanes) * Math.PI + 0.35;
+      const planeRotY = (plane / numPlanes) * Math.PI * 2;
+
+      for (let sat = 0; sat < satsPerPlane; sat++) {
+        const satObj = createRelaySatellite();
+        satObj.scale.setScalar(0.25);
+        relaySatellites.push(satObj);
+        relayGroup.add(satObj);
+
+        satObj.userData = {
+          phase: (sat / satsPerPlane) * Math.PI * 2,
+          update: (time: number, delta: number, prefersReducedMotion?: boolean) => {
+            const speed = prefersReducedMotion ? 0.03 : 0.10;
+            const currentPhase = satObj.userData.phase + time * speed;
+            
+            const x = Math.cos(currentPhase) * orbitRadius;
+            const z = Math.sin(currentPhase) * orbitRadius;
+            
+            const pos = new THREE.Vector3(x, 0, z);
+            pos.applyAxisAngle(new THREE.Vector3(1, 0, 0), inclination);
+            pos.applyAxisAngle(new THREE.Vector3(0, 1, 0), planeRotY);
+            
+            satObj.position.copy(pos);
+            satObj.lookAt(0, 0, 0); // Point transponder dish towards Earth
+            
+            // Beacon pulsing update
+            satObj.children.forEach(c => {
+              if (c.userData.update) {
+                c.userData.update(time, delta, prefersReducedMotion);
+              }
+            });
+          }
+        };
+      }
+    }
+
+    // ── MMINT HABITAT RING (Rotating Stanford Torus orbiting Genesis) ──
+    const habitatRing = createHabitatRing();
+    habitatRing.scale.setScalar(0.7);
+    scene.add(habitatRing);
+
+    habitatRing.userData = {
+      update: (time: number, delta: number, prefersReducedMotion?: boolean) => {
+        // Run station rotation update
+        habitatRing.children.forEach(c => {
+          if (c.userData.update) c.userData.update(time, delta, prefersReducedMotion);
+        });
+
+        // Orbit Genesis at [18, 0, -45]
+        const speed = prefersReducedMotion ? 0.012 : 0.035;
+        const radius = 13.0;
+        const angle = time * speed;
+        
+        habitatRing.position.set(
+          18 + Math.cos(angle) * radius,
+          Math.sin(angle * 0.45) * 2.0,
+          -45 + Math.sin(angle) * radius
+        );
+        habitatRing.rotation.y = time * 0.05;
+      }
+    };
+
+    // ── GLOWING TRANSIT LANES (Communication/Cargo Corridors) ──
+    const routes = [
+      createGlowingRoute([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(-2, 1, -2),
+        new THREE.Vector3(-6, 2, -5)
+      ], 0x3388ff), // Earth to ISS (blue)
+
+      createGlowingRoute([
+        new THREE.Vector3(-6, 2, -5),
+        new THREE.Vector3(5, 5, -50),
+        new THREE.Vector3(15, 3, -100),
+        new THREE.Vector3(24, 0, -135)
+      ], 0x00ffcc), // ISS to Gateway (teal)
+
+      createGlowingRoute([
+        new THREE.Vector3(24, 0, -135),
+        new THREE.Vector3(26, -5, -90),
+        new THREE.Vector3(18, 0, -45)
+      ], 0xffaa00) // Gateway to Genesis (orange)
+    ];
+    routes.forEach(route => scene.add(route));
+
+    // ── CIVILIAN TRAFFIC FLEET ──
+    interface TrafficShip {
+      mesh: THREE.Group;
+      curve: THREE.CatmullRomCurve3;
+      progress: number;
+      speed: number;
+      direction: number;
+    }
+    const trafficShips: TrafficShip[] = [];
+
+    const spawnTrafficShip = (points: THREE.Vector3[], modelCreator: () => THREE.Group, speed: number) => {
+      const curve = new THREE.CatmullRomCurve3(points);
+      const mesh = modelCreator();
+      mesh.scale.setScalar(0.35);
+      scene.add(mesh);
+
+      trafficShips.push({
+        mesh,
+        curve,
+        progress: Math.random(),
+        speed: speed * (0.8 + Math.random() * 0.4),
+        direction: Math.random() > 0.5 ? 1 : -1
+      });
+    };
+
+    // Spawn various civilian ferries, shuttles, drones, and cargo vessels
+    spawnTrafficShip([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(-2, 1, -2),
+      new THREE.Vector3(-6, 2, -5)
+    ], createPassengerShuttle, 0.05);
+
+    spawnTrafficShip([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(-2, 1, -2),
+      new THREE.Vector3(-6, 2, -5)
+    ], createMaintenanceDrone, 0.08);
+
+    spawnTrafficShip([
+      new THREE.Vector3(-6, 2, -5),
+      new THREE.Vector3(5, 5, -50),
+      new THREE.Vector3(15, 3, -100),
+      new THREE.Vector3(24, 0, -135)
+    ], createOrbitalFerry, 0.02);
+
+    spawnTrafficShip([
+      new THREE.Vector3(-6, 2, -5),
+      new THREE.Vector3(5, 5, -50),
+      new THREE.Vector3(15, 3, -100),
+      new THREE.Vector3(24, 0, -135)
+    ], createCargoShip, 0.015);
+
+    spawnTrafficShip([
+      new THREE.Vector3(24, 0, -135),
+      new THREE.Vector3(26, -5, -90),
+      new THREE.Vector3(18, 0, -45)
+    ], createCargoShip, 0.018);
+
+    spawnTrafficShip([
+      new THREE.Vector3(24, 0, -135),
+      new THREE.Vector3(26, -5, -90),
+      new THREE.Vector3(18, 0, -45)
+    ], createPassengerShuttle, 0.03);
+
     // Stage 8: Jupiter
     const jupiterGroup = createPlanet("jupiter");
     jupiterGroup.position.set(55, 30, -150);
@@ -506,6 +704,37 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
         if (child instanceof THREE.Points && child.userData.velocities) {
           updateThrusterPlume(child, delta, prefersReducedMotion);
         }
+      });
+
+      // Update civilian traffic along corridors
+      trafficShips.forEach(ship => {
+        const step = delta * ship.speed;
+        ship.progress += step * ship.direction;
+
+        if (ship.progress > 1.0) {
+          ship.progress = 1.0;
+          ship.direction = -1; // turnaround
+        } else if (ship.progress < 0.0) {
+          ship.progress = 0.0;
+          ship.direction = 1; // turnaround
+        }
+
+        // Calculate position and tangent orientation
+        const pos = ship.curve.getPointAt(ship.progress);
+        ship.mesh.position.copy(pos);
+
+        const tangent = ship.curve.getTangentAt(ship.progress).normalize();
+        if (ship.direction < 0) tangent.multiplyScalar(-1);
+        
+        const lookTarget = pos.clone().add(tangent);
+        ship.mesh.lookAt(lookTarget);
+
+        // Run nested updates (for engine exhaust, plumes, warning lights)
+        ship.mesh.children.forEach(c => {
+          if (c.userData.update) {
+            c.userData.update(time, delta, prefersReducedMotion);
+          }
+        });
       });
 
       // Update Asteroid Belt custom operations (laser flickering, instanced orbits)

@@ -564,6 +564,7 @@ export function createISS() {
 
   // 6. Main solar array wings mounted on cylindrical rotating masts
   const arrayWings = [-3.3, 3.3];
+  const panelsToTrack: THREE.Mesh[] = [];
   arrayWings.forEach((zOffset) => {
     // Mounting mast
     const mastGeo = new THREE.CylinderGeometry(0.04, 0.04, 3.8, 8);
@@ -579,10 +580,21 @@ export function createISS() {
       panel.position.set(xOffset * 1.5, 0, zOffset);
       panel.castShadow = true;
       iss.add(panel);
+      panelsToTrack.push(panel);
     });
   });
 
   iss.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+    // Dual axis sun tracking
+    iss.updateMatrixWorld();
+    const sunWorld = new THREE.Vector3(200, 50, 300);
+    const localSun = sunWorld.clone().applyMatrix4(iss.matrixWorld.clone().invert());
+    // Rotate panels around local X-axis to point normal to the sun in local space
+    const angle = Math.atan2(localSun.z, localSun.y);
+    panelsToTrack.forEach((p) => {
+      p.rotation.x = angle;
+    });
+
     if (prefersReducedMotion) return;
     iss.rotation.y = time * 0.015;
     iss.rotation.x = time * 0.005;
@@ -642,6 +654,7 @@ export function createSpaceShipyard() {
   const solarGroup = new THREE.Group();
   solarGroup.position.y = 8;
   solarGroup.rotation.y = Math.PI / 4;
+  const shipyardPanels: THREE.Mesh[] = [];
   [-8, 8].forEach((xPos) => {
     const panel = new THREE.Mesh(
       new THREE.BoxGeometry(5, 0.02, 2.5),
@@ -650,6 +663,7 @@ export function createSpaceShipyard() {
     panel.position.x = xPos;
     panel.castShadow = true;
     solarGroup.add(panel);
+    shipyardPanels.push(panel);
   });
   shipyard.add(solarGroup);
 
@@ -682,6 +696,21 @@ export function createSpaceShipyard() {
     const strobe = Math.sin(time * 8.0) > 0.0;
     beaconMatRed.color.setHex(strobe ? 0xff0040 : 0x200005);
     beaconMatGreen.color.setHex(strobe ? 0x00ff40 : 0x002005);
+
+    // Sun tracking
+    shipyard.updateMatrixWorld();
+    const sunWorld = new THREE.Vector3(200, 50, 300);
+    const localSun = sunWorld.clone().applyMatrix4(shipyard.matrixWorld.clone().invert());
+    // Rotate solarGroup around local Y-axis to track sun azimuth
+    const azimuth = Math.atan2(localSun.x, localSun.z);
+    solarGroup.rotation.y = azimuth;
+
+    // Tilt panels around their X axis to track sun elevation
+    const localSunRotated = localSun.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -azimuth);
+    const tiltAngle = Math.atan2(localSunRotated.z, localSunRotated.y);
+    shipyardPanels.forEach((p) => {
+      p.rotation.x = tiltAngle;
+    });
 
     if (prefersReducedMotion) return;
     gravityHub.rotation.y = time * 0.04;
@@ -736,4 +765,343 @@ export function createSpacecraftFleet() {
 // ── SATELLITE SYSTEM ARRAY (Hubble Space Telescope) ──
 export function createSatellite() {
   return createHubbleTelescope();
+}
+
+// ── MMINT HABITAT RING (Rotating Stanford Torus) ──
+export function createHabitatRing() {
+  const group = new THREE.Group();
+  
+  const metalMat = new THREE.MeshStandardMaterial({
+    color: 0xdddddd,
+    metalness: 0.8,
+    roughness: 0.2,
+  });
+
+  const emissiveWindowMat = new THREE.MeshBasicMaterial({
+    color: 0xffdd80,
+  });
+
+  // Main torus tube (the living ring)
+  const ringGeo = new THREE.TorusGeometry(3.0, 0.35, 16, 64);
+  const ring = new THREE.Mesh(ringGeo, metalMat);
+  ring.rotation.x = Math.PI / 2;
+  ring.castShadow = true;
+  ring.receiveShadow = true;
+  group.add(ring);
+
+  // Central hub (cylinder)
+  const hubGeo = new THREE.CylinderGeometry(0.45, 0.45, 1.0, 16);
+  const hub = new THREE.Mesh(hubGeo, metalMat);
+  hub.rotation.x = Math.PI / 2;
+  hub.castShadow = true;
+  group.add(hub);
+
+  // Spokes connecting hub to torus
+  const numSpokes = 6;
+  for (let i = 0; i < numSpokes; i++) {
+    const angle = (i / numSpokes) * Math.PI * 2;
+    const spokeGroup = new THREE.Group();
+    spokeGroup.rotation.y = angle;
+
+    const spokeGeo = new THREE.CylinderGeometry(0.08, 0.08, 3.0, 8);
+    const spoke = new THREE.Mesh(spokeGeo, metalMat);
+    spoke.position.y = 1.5;
+    spoke.rotation.z = Math.PI / 2; // Lie flat in the ring plane
+    spoke.castShadow = true;
+    spokeGroup.add(spoke);
+
+    group.add(spokeGroup);
+  }
+
+  // Windows: small glowing cylinders/boxes around the ring
+  const numWindows = 32;
+  for (let i = 0; i < numWindows; i++) {
+    const angle = (i / numWindows) * Math.PI * 2;
+    const x = Math.cos(angle) * 3.0;
+    const z = Math.sin(angle) * 3.0;
+
+    const winGeo = new THREE.BoxGeometry(0.08, 0.12, 0.04);
+    
+    // Inner windows
+    const win1 = new THREE.Mesh(winGeo, emissiveWindowMat);
+    win1.position.set(x * 0.9, 0.0, z * 0.9);
+    win1.lookAt(0, 0, 0);
+    group.add(win1);
+
+    // Outer windows
+    const win2 = new THREE.Mesh(winGeo, emissiveWindowMat);
+    win2.position.set(x * 1.1, 0.0, z * 1.1);
+    win2.lookAt(0, 0, 0);
+    group.add(win2);
+  }
+
+  group.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+    if (prefersReducedMotion) return;
+    group.rotation.y = time * 0.06; // Spin station for artificial gravity simulation
+  };
+
+  return group;
+}
+
+// ── MMINT RELAY SATELLITE ──
+export function createRelaySatellite() {
+  const satGroup = new THREE.Group();
+  
+  const foilTex = createCrinkledFoilTexture();
+  const foilMat = new THREE.MeshStandardMaterial({
+    color: 0xd4a030, // Golden Mylar foil
+    map: foilTex,
+    roughness: 0.35,
+    metalness: 0.9,
+  });
+
+  const metalMat = new THREE.MeshStandardMaterial({
+    color: 0xaaaaaa,
+    metalness: 0.8,
+    roughness: 0.3,
+  });
+
+  const beaconMat = new THREE.MeshBasicMaterial({
+    color: 0x00ffff,
+  });
+
+  // 1. Central bus (gold foil cube)
+  const bus = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), foilMat);
+  bus.castShadow = true;
+  satGroup.add(bus);
+
+  // 2. High-gain communication dish (parabolic cone)
+  const dish = new THREE.Mesh(
+    new THREE.ConeGeometry(0.18, 0.12, 12, 1, true),
+    metalMat
+  );
+  dish.position.z = 0.22;
+  dish.rotation.x = Math.PI / 2;
+  dish.castShadow = true;
+  satGroup.add(dish);
+
+  const subFeed = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.15, 6), metalMat);
+  subFeed.position.z = 0.28;
+  subFeed.rotation.x = Math.PI / 2;
+  satGroup.add(subFeed);
+
+  // 3. Solar panel wings (two wings, blue-grey)
+  const panelMat = new THREE.MeshStandardMaterial({
+    color: 0x0a1d33,
+    roughness: 0.2,
+    metalness: 0.8,
+    emissive: 0x003344,
+    emissiveIntensity: 0.3,
+  });
+  [-1, 1].forEach((side) => {
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.15, 6), metalMat);
+    arm.position.x = side * 0.22;
+    arm.rotation.z = Math.PI / 2;
+    satGroup.add(arm);
+
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.01, 0.18), panelMat);
+    panel.position.x = side * 0.5;
+    panel.castShadow = true;
+    satGroup.add(panel);
+  });
+
+  // 4. Thruster nozzles (tiny grey cylinders at the bottom)
+  [-0.1, 0.1].forEach((xOff) => {
+    const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.04, 6), metalMat);
+    nozzle.position.set(xOff, -0.16, 0);
+    nozzle.castShadow = true;
+    satGroup.add(nozzle);
+  });
+
+  // 5. Glowing blue transponder beacons
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), beaconMat);
+  beacon.position.set(0, 0.16, 0);
+  satGroup.add(beacon);
+
+  satGroup.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+    // Pulse beacon glow
+    const pulse = 0.5 + 0.5 * Math.sin(time * 6.0);
+    beaconMat.color.setRGB(0, pulse, pulse);
+    
+    if (prefersReducedMotion) return;
+    // Micro-rotations to simulate attitude control drift
+    bus.rotation.y = Math.sin(time * 0.2) * 0.05;
+    bus.rotation.x = Math.cos(time * 0.15) * 0.05;
+  };
+
+  return satGroup;
+}
+
+// ── PASSENGER SHUTTLE ──
+export function createPassengerShuttle() {
+  const group = new THREE.Group();
+  
+  const hullMat = new THREE.MeshStandardMaterial({
+    color: 0xeeeeee,
+    roughness: 0.3,
+    metalness: 0.2,
+  });
+  
+  const darkGlassMat = new THREE.MeshStandardMaterial({
+    color: 0x111111,
+    roughness: 0.1,
+    metalness: 0.9,
+  });
+
+  const wingMat = new THREE.MeshStandardMaterial({
+    color: 0xdddddd,
+    roughness: 0.4,
+    metalness: 0.3,
+  });
+
+  // Main cabin (capsule-like shape)
+  const cabin = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.2, 0.8, 12), hullMat);
+  cabin.rotation.x = Math.PI / 2;
+  cabin.castShadow = true;
+  group.add(cabin);
+
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.3, 12), hullMat);
+  nose.position.z = 0.55;
+  nose.rotation.x = Math.PI / 2;
+  group.add(nose);
+
+  // Visor / Cockpit window
+  const visor = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12, 0, Math.PI * 2, 0, 0.6), darkGlassMat);
+  visor.position.set(0, 0.05, 0.5);
+  visor.rotation.x = Math.PI / 3;
+  group.add(visor);
+
+  // Wings
+  [-1, 1].forEach((side) => {
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.02, 0.3), wingMat);
+    wing.position.set(side * 0.3, -0.05, -0.1);
+    wing.rotation.y = side * 0.1;
+    group.add(wing);
+  });
+
+  // Engine exhaust bell
+  const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.15, 8), wingMat);
+  engine.position.set(0, 0, -0.475);
+  engine.rotation.x = Math.PI / 2;
+  group.add(engine);
+
+  // Small blue thruster plume
+  const plume = createThrusterPlume("#3388ff", 40, 0.12);
+  plume.position.set(0, 0, -0.55);
+  plume.rotation.x = Math.PI / 2;
+  group.add(plume);
+
+  return group;
+}
+
+// ── MAINTENANCE DRONE ──
+export function createMaintenanceDrone() {
+  const group = new THREE.Group();
+  
+  const metalMat = new THREE.MeshStandardMaterial({
+    color: 0x888888,
+    metalness: 0.9,
+    roughness: 0.3,
+  });
+
+  const lightMat = new THREE.MeshBasicMaterial({
+    color: 0xffaa00,
+  });
+
+  // Spherical body
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 12), metalMat);
+  body.castShadow = true;
+  group.add(body);
+
+  // Sensor lens
+  const eye = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.05, 8), new THREE.MeshBasicMaterial({ color: 0x00ffcc }));
+  eye.position.set(0, 0.03, 0.1);
+  eye.rotation.x = Math.PI / 2;
+  group.add(eye);
+
+  // Two tiny robotic arms
+  [-1, 1].forEach((side) => {
+    const arm = new THREE.Group();
+    arm.position.set(side * 0.12, -0.05, 0.05);
+
+    const segment1 = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.15, 6), metalMat);
+    segment1.position.y = -0.075;
+    segment1.rotation.z = side * 0.4;
+    arm.add(segment1);
+
+    const segment2 = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.12, 6), metalMat);
+    segment2.position.set(side * 0.05, -0.18, 0.05);
+    segment2.rotation.x = 0.5;
+    arm.add(segment2);
+
+    group.add(arm);
+  });
+
+  // Blinking light
+  const light = new THREE.Mesh(new THREE.SphereGeometry(0.02, 6, 6), lightMat);
+  light.position.set(0, 0.13, 0);
+  group.add(light);
+
+  group.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+    // blink
+    const blink = Math.sin(time * 12.0) > 0.0;
+    lightMat.color.setHex(blink ? 0xffaa00 : 0x332200);
+  };
+
+  return group;
+}
+
+// ── ORBITAL FERRY ──
+export function createOrbitalFerry() {
+  const group = new THREE.Group();
+  
+  const hullMat = new THREE.MeshStandardMaterial({
+    color: 0xddddcc,
+    roughness: 0.5,
+    metalness: 0.4,
+  });
+
+  const metalMat = new THREE.MeshStandardMaterial({
+    color: 0x555555,
+    metalness: 0.8,
+    roughness: 0.3,
+  });
+
+  // Main flat rectangular bed/cabin
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.25, 0.9), hullMat);
+  body.castShadow = true;
+  group.add(body);
+
+  // Docking adaptors (torus on top)
+  const dock = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.02, 6, 12), metalMat);
+  dock.position.y = 0.14;
+  dock.rotation.x = Math.PI / 2;
+  group.add(dock);
+
+  // Engine exhaust ports (four smaller nozzles at the back)
+  const positions = [
+    [-0.12, -0.06],
+    [0.12, -0.06],
+    [-0.12, 0.06],
+    [0.12, 0.06],
+  ];
+  positions.forEach(([x, y]) => {
+    const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.03, 0.08, 6), metalMat);
+    nozzle.position.set(x, y, -0.49);
+    nozzle.rotation.x = Math.PI / 2;
+    group.add(nozzle);
+  });
+
+  // Small orange plumes
+  const plume1 = createThrusterPlume("#ffaa00", 30, 0.08);
+  plume1.position.set(-0.12, 0, -0.54);
+  plume1.rotation.x = Math.PI / 2;
+  group.add(plume1);
+
+  const plume2 = createThrusterPlume("#ffaa00", 30, 0.08);
+  plume2.position.set(0.12, 0, -0.54);
+  plume2.rotation.x = Math.PI / 2;
+  group.add(plume2);
+
+  return group;
 }
