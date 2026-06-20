@@ -316,6 +316,7 @@ export function createCargoShip() {
     new THREE.CylinderGeometry(0.7, 0.7, 2.2, 32),
     new THREE.MeshStandardMaterial({ color: 0xb8b0a0, roughness: 0.8, metalness: 0.2, normalMap: panelNormal })
   );
+  hull.name = "hull";
   hull.castShadow = true;
   hull.receiveShadow = true;
   cargoGroup.add(hull);
@@ -339,6 +340,7 @@ export function createCargoShip() {
       })
     );
     box.position.set(x, y, 0);
+    box.name = `box_${idx}`;
     box.castShadow = true;
     cargoGroup.add(box);
   });
@@ -350,10 +352,13 @@ export function createCargoShip() {
   );
   dock.position.y = 1.2;
   dock.rotation.x = Math.PI / 2;
+  dock.name = "dock";
   dock.castShadow = true;
   cargoGroup.add(dock);
 
   // Rear engine cluster bells
+  const engineGroup = new THREE.Group();
+  engineGroup.name = "engines";
   [-0.35, 0.35].forEach((xOffset) => {
     const nozzleGroup = new THREE.Group();
     nozzleGroup.position.set(xOffset, -1.3, 0);
@@ -370,8 +375,42 @@ export function createCargoShip() {
     plume.rotation.x = Math.PI;
     nozzleGroup.add(plume);
 
-    cargoGroup.add(nozzleGroup);
+    engineGroup.add(nozzleGroup);
   });
+  cargoGroup.add(engineGroup);
+
+  // Scroll interactive disassembly behavior (Apple style exploded view)
+  const boxOffsets = [
+    { x: -0.6, z: -0.6 },
+    { x: 0.6, z: -0.6 },
+    { x: -0.6, z: 0.6 },
+    { x: 0.6, z: 0.6 }
+  ];
+
+  cargoGroup.userData.updateScroll = (scrollVal: number) => {
+    const dist = Math.abs(scrollVal - 5.0);
+    const factor = Math.max(0, 1.0 - dist * 2.2); // Peak at 1.0 when scroll reaches 5.0
+
+    // Slide dock collar forward
+    if (dock) {
+      dock.position.y = 1.2 + factor * 1.2;
+    }
+
+    // Slide engines backward
+    if (engineGroup) {
+      engineGroup.position.y = factor * -0.8;
+    }
+
+    // Explode cargo containers outward
+    for (let i = 0; i < 4; i++) {
+      const boxMesh = cargoGroup.getObjectByName(`box_${i}`);
+      if (boxMesh) {
+        const orig = containerCoords[i];
+        boxMesh.position.x = orig[0] + boxOffsets[i].x * factor;
+        boxMesh.position.z = boxOffsets[i].z * factor;
+      }
+    }
+  };
 
   return cargoGroup;
 }
@@ -622,12 +661,14 @@ export function createSpaceShipyard() {
     new THREE.TorusGeometry(7.5, 0.5, 8, 48),
     new THREE.MeshStandardMaterial({ color: 0x2d2d32, metalness: 0.9, normalMap: panelNormal })
   );
+  dockRing.name = "dockRing";
   dockRing.rotation.x = Math.PI / 2;
   dockRing.castShadow = true;
   shipyard.add(dockRing);
 
   // Rotating Gravity Hub
   const gravityHub = new THREE.Group();
+  gravityHub.name = "gravityHub";
   const rotor = new THREE.Mesh(
     new THREE.CylinderGeometry(4.5, 4.5, 1.2, 16),
     new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8, roughness: 0.5 })
@@ -652,6 +693,7 @@ export function createSpaceShipyard() {
 
   // Solar Panel energy collectors
   const solarGroup = new THREE.Group();
+  solarGroup.name = "solarGroup";
   solarGroup.position.y = 8;
   solarGroup.rotation.y = Math.PI / 4;
   const shipyardPanels: THREE.Mesh[] = [];
@@ -687,6 +729,7 @@ export function createSpaceShipyard() {
 
   // Creator Cruiser docked at the platform
   const dockedExplorer = createCreatorCruiser();
+  dockedExplorer.name = "dockedExplorer";
   dockedExplorer.position.set(7.5, 0, 0);
   dockedExplorer.rotation.z = Math.PI / 2;
   dockedExplorer.scale.set(0.45, 0.45, 0.45);
@@ -718,6 +761,32 @@ export function createSpaceShipyard() {
     // Delegate updates to children
     astronaut.userData.update?.(time, delta, prefersReducedMotion);
     dockedExplorer.userData.update?.(time, delta, prefersReducedMotion);
+  };
+
+  // Scroll interactive undocking/exploded blueprint view (Apple style)
+  shipyard.userData.updateScroll = (scrollVal: number) => {
+    const dist = Math.abs(scrollVal - 4.0);
+    const factor = Math.max(0, 1.0 - dist * 2.2); // Peak at 1.0 when scroll reaches 4.0
+
+    // Scale docking ring outward
+    if (dockRing) {
+      dockRing.scale.setScalar(1.0 + factor * 0.35);
+    }
+
+    // Elevate gravity hub
+    if (gravityHub) {
+      gravityHub.position.y = 4.0 + factor * 2.8;
+    }
+
+    // Elevate solar group
+    if (solarGroup) {
+      solarGroup.position.y = 8.0 + factor * 4.0;
+    }
+
+    // Undock the cruiser away from the platform
+    if (dockedExplorer) {
+      dockedExplorer.position.x = 7.5 + factor * 5.5;
+    }
   };
 
   return shipyard;

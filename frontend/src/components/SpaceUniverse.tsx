@@ -700,6 +700,10 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
         if (child.userData.update) {
           child.userData.update(time, delta, prefersReducedMotion);
         }
+        // Run scroll-based interactive blueprint/docking animations
+        if (child.userData.updateScroll) {
+          child.userData.updateScroll(scrollRef.current);
+        }
         // Run particle plume expansion physics
         if (child instanceof THREE.Points && child.userData.velocities) {
           updateThrusterPlume(child, delta, prefersReducedMotion);
