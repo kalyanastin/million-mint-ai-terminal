@@ -380,7 +380,7 @@ export default function Home() {
                   Building high-fidelity decentralized virtual environments and economic primitives for creator-owned space civilizations.
                 </p>
                 <div className="flex gap-4 mt-4 font-mono text-xs text-[#00ffc8]">
-                  <a href="https://x.com/kalyanchowdary" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">X / Twitter</a>
+                  <a href="https://x.com/kalyanchow369" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">X / Twitter</a>
                   <span>•</span>
                   <a href="https://github.com/kalyanastin" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
                   <span>•</span>

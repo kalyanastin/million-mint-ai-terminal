@@ -73,7 +73,7 @@ export default function RootLayout({
           "jobTitle": "Founder",
           "sameAs": [
             "https://github.com/kalyanastin",
-            "https://x.com/kalyanchowdary",
+            "https://x.com/kalyanchow369",
             "https://t.me/millionmint"
           ]
         }

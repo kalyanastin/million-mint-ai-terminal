@@ -145,9 +145,9 @@ export default function FounderPage() {
                 <div className="mt-8 pt-6 border-t border-[rgba(255,255,255,0.06)]">
                   <h4 className="text-white font-bold uppercase mb-4">Connect with the Founder:</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <a href="https://x.com/kalyanchowdary" target="_blank" rel="noopener noreferrer" className="p-4 border border-[rgba(255,255,255,0.06)] hover:border-[#00ffc8] bg-white/2 hover:bg-white/5 transition-all text-center">
+                    <a href="https://x.com/kalyanchow369" target="_blank" rel="noopener noreferrer" className="p-4 border border-[rgba(255,255,255,0.06)] hover:border-[#00ffc8] bg-white/2 hover:bg-white/5 transition-all text-center">
                       <strong className="text-[#00ffc8] block mb-1">X / Twitter</strong>
-                      <span className="text-xs text-zinc-500">@kalyanchowdary</span>
+                      <span className="text-xs text-zinc-500">@kalyanchow369</span>
                     </a>
                     <a href="https://github.com/kalyanastin" target="_blank" rel="noopener noreferrer" className="p-4 border border-[rgba(255,255,255,0.06)] hover:border-[#f5c842] bg-white/2 hover:bg-white/5 transition-all text-center">
                       <strong className="text-[#f5c842] block mb-1">GitHub</strong>
