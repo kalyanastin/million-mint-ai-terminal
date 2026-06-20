@@ -380,26 +380,57 @@ export function createCargoShip() {
 export function createHubbleTelescope() {
   const hubble = new THREE.Group();
 
-  // Silver cylindrical body
-  const bodyGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.8, 16);
   const bodyMat = new THREE.MeshStandardMaterial({
     color: 0xcccccc,
     metalness: 0.9,
     roughness: 0.1,
   });
-  const body = new THREE.Mesh(bodyGeo, bodyMat);
-  body.rotation.x = Math.PI / 2;
-  body.castShadow = true;
-  hubble.add(body);
 
-  // Aperture door (open cap at one end)
-  const doorGeo = new THREE.BoxGeometry(0.4, 0.02, 0.4);
+  const foilTex = createCrinkledFoilTexture();
+  const foilMat = new THREE.MeshStandardMaterial({
+    color: 0xd4a030, // Golden Mylar insulation
+    map: foilTex,
+    roughness: 0.35,
+    metalness: 0.9,
+  });
+
+  // 1. Tapered Front Telescope Tube
+  const frontTube = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 1.0, 16), bodyMat);
+  frontTube.position.set(0, 0, 0.4);
+  frontTube.rotation.x = Math.PI / 2;
+  frontTube.castShadow = true;
+  hubble.add(frontTube);
+
+  // 2. Rear Wider Equipment/Mirror Section
+  const rearSection = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.8, 16), bodyMat);
+  rearSection.position.set(0, 0, -0.5);
+  rearSection.rotation.x = Math.PI / 2;
+  rearSection.castShadow = true;
+  hubble.add(rearSection);
+
+  // 3. Reflective Telescope Lens primary mirror inside the barrel
+  const lensGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.05, 16);
+  const lensMat = new THREE.MeshStandardMaterial({
+    color: 0x0088ff,
+    roughness: 0.01,
+    metalness: 0.98,
+    emissive: 0x001133,
+    emissiveIntensity: 0.4,
+  });
+  const lens = new THREE.Mesh(lensGeo, lensMat);
+  lens.position.set(0, 0, 0.3); // nested inside the front tube
+  lens.rotation.x = Math.PI / 2;
+  hubble.add(lens);
+
+  // 4. Aperture door (open cap at one end)
+  const doorGeo = new THREE.BoxGeometry(0.35, 0.02, 0.35);
   const door = new THREE.Mesh(doorGeo, bodyMat);
-  door.position.set(0, 0.4, 0.95);
-  door.rotation.x = -Math.PI / 4;
+  door.position.set(0, 0.32, 0.88);
+  door.rotation.x = -Math.PI / 3.5;
+  door.castShadow = true;
   hubble.add(door);
 
-  // Golden/copper solar panels
+  // 5. Golden/copper solar panels
   const panelMat = new THREE.MeshStandardMaterial({
     color: 0xd4a030,
     metalness: 0.7,
@@ -414,19 +445,29 @@ export function createHubbleTelescope() {
     arm.rotation.z = Math.PI / 2;
     panelGroup.add(arm);
 
-    const solarGeo = new THREE.BoxGeometry(0.1, 0.02, 1.4);
+    const solarGeo = new THREE.BoxGeometry(0.12, 0.02, 1.4);
     const solar = new THREE.Mesh(solarGeo, panelMat);
-    solar.position.x = side * 0.2;
+    solar.position.x = side * 0.25;
     panelGroup.add(solar);
 
     hubble.add(panelGroup);
   });
 
-  // Antennas / dishes
-  const dishGeo = new THREE.ConeGeometry(0.15, 0.1, 8, 1, true);
+  // 6. Gold-foiled electronics equipment boxes on the rear
+  const boxGeo = new THREE.BoxGeometry(0.22, 0.22, 0.22);
+  [-0.48, 0.48].forEach((xPos) => {
+    const box = new THREE.Mesh(boxGeo, foilMat);
+    box.position.set(xPos, 0.15, -0.4);
+    box.castShadow = true;
+    hubble.add(box);
+  });
+
+  // 7. Communication antenna dishes
+  const dishGeo = new THREE.ConeGeometry(0.15, 0.08, 12, 1, true);
   const dish = new THREE.Mesh(dishGeo, panelMat);
-  dish.position.set(0, -0.45, 0);
+  dish.position.set(0, -0.45, -0.2);
   dish.rotation.x = Math.PI;
+  dish.castShadow = true;
   hubble.add(dish);
 
   hubble.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
@@ -449,39 +490,94 @@ export function createISS() {
   });
 
   const copperMat = new THREE.MeshStandardMaterial({
-    color: 0xb87333, // Copper/gold
+    color: 0xb87333, // Copper/gold solar panels
     metalness: 0.8,
     roughness: 0.4,
   });
 
-  // Central long truss structure
-  const trussGeo = new THREE.BoxGeometry(0.1, 0.1, 7.5);
+  const radiatorMat = new THREE.MeshStandardMaterial({
+    color: 0xf0f0f0, // White thermal radiators
+    roughness: 0.8,
+    metalness: 0.1,
+  });
+
+  // 1. Central long integrated truss structure with detailed cross grid supports
+  const trussGeo = new THREE.BoxGeometry(0.12, 0.12, 7.5);
   const truss = new THREE.Mesh(trussGeo, metalMat);
   iss.add(truss);
 
-  // Central cylindrical modules (hab/labs)
-  const moduleGeo = new THREE.CylinderGeometry(0.28, 0.28, 1.2, 12);
-  const coreModule = new THREE.Mesh(moduleGeo, metalMat);
+  // Detailed cross support girders on the truss
+  for (let z = -3.0; z <= 3.0; z += 1.0) {
+    if (Math.abs(z) < 0.5) continue;
+    const girder = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.24, 0.04), metalMat);
+    girder.position.set(0, 0, z);
+    iss.add(girder);
+  }
+
+  // 2. Central cylindrical modules core (Destiny / Unity Node)
+  const coreModule = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 1.2, 12), metalMat);
   coreModule.rotation.x = Math.PI / 2;
+  coreModule.castShadow = true;
   iss.add(coreModule);
 
-  const nodeGeo = new THREE.SphereGeometry(0.3, 12, 12);
-  const coreNode = new THREE.Mesh(nodeGeo, metalMat);
+  const coreNode = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 12), metalMat);
   iss.add(coreNode);
 
-  // Cross modules
-  const crossModule = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.6, 12), metalMat);
-  crossModule.position.set(0, 0, 0.4);
-  iss.add(crossModule);
+  // 3. Columbus & Kibo Research Modules extending laterally
+  const kiboModule = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.8, 12), metalMat);
+  kiboModule.position.set(0.6, 0, 0.3);
+  kiboModule.rotation.z = Math.PI / 2;
+  kiboModule.castShadow = true;
+  iss.add(kiboModule);
 
-  // Solar array wings at the ends of the truss
-  const arrayWings = [-3.2, 3.2];
+  const columbusModule = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.6, 12), metalMat);
+  columbusModule.position.set(-0.55, 0, 0.3);
+  columbusModule.rotation.z = Math.PI / 2;
+  columbusModule.castShadow = true;
+  iss.add(columbusModule);
+
+  // 4. Russian Zvezda Service Module core (back section)
+  const serviceModule = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.85, 12), metalMat);
+  serviceModule.position.set(0, 0, -1.25);
+  serviceModule.rotation.x = Math.PI / 2;
+  serviceModule.castShadow = true;
+  iss.add(serviceModule);
+
+  // Smaller solar panels for Zvezda module
+  [-0.9, 0.9].forEach((xOffset) => {
+    const smPanelGeo = new THREE.BoxGeometry(0.65, 0.01, 0.18);
+    const smPanel = new THREE.Mesh(smPanelGeo, copperMat);
+    smPanel.position.set(xOffset, 0, -1.25);
+    iss.add(smPanel);
+  });
+
+  // 5. White radiator arrays perpendicular to solar arrays
+  const radiatorPositions = [-1.6, 1.6];
+  radiatorPositions.forEach((zOffset) => {
+    const radGeo = new THREE.BoxGeometry(0.75, 0.01, 1.1);
+    const rad = new THREE.Mesh(radGeo, radiatorMat);
+    rad.position.set(0, 0.2, zOffset);
+    rad.rotation.y = Math.PI / 2;
+    rad.castShadow = true;
+    iss.add(rad);
+  });
+
+  // 6. Main solar array wings mounted on cylindrical rotating masts
+  const arrayWings = [-3.3, 3.3];
   arrayWings.forEach((zOffset) => {
+    // Mounting mast
+    const mastGeo = new THREE.CylinderGeometry(0.04, 0.04, 3.8, 8);
+    const mast = new THREE.Mesh(mastGeo, metalMat);
+    mast.rotation.z = Math.PI / 2;
+    mast.position.set(0, 0, zOffset);
+    iss.add(mast);
+
     // 4 large solar panels on each side
     [-0.8, -0.3, 0.3, 0.8].forEach((xOffset) => {
       const panelGeo = new THREE.BoxGeometry(1.4, 0.02, 0.45);
       const panel = new THREE.Mesh(panelGeo, copperMat);
       panel.position.set(xOffset * 1.5, 0, zOffset);
+      panel.castShadow = true;
       iss.add(panel);
     });
   });

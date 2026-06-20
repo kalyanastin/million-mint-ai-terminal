@@ -9,6 +9,8 @@ function createProceduralTexture(
     | "earth-day"
     | "earth-night"
     | "earth-specular"
+    | "earth-clouds"
+    | "earth-bump"
     | "moon"
     | "mars"
     | "saturn"
@@ -264,63 +266,111 @@ function createProceduralTexture(
       ctx.fillRect(0, Math.random() * canvas.height, canvas.width, Math.random() * 60 + 20);
     }
   } else if (type === "genesis") {
-    // Cyber-obsidian network planet
-    ctx.fillStyle = "#0a0c10"; // Deep space obsidian base
+    // 1. Dark charcoal/basalt base
+    ctx.fillStyle = "#121214";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw grid coordinate lines in background
-    ctx.strokeStyle = "rgba(0, 255, 200, 0.05)";
-    ctx.lineWidth = 0.5;
-    for (let x = 0; x < canvas.width; x += 32) {
+    // 2. Add dark slate basaltic plains/patches
+    ctx.fillStyle = "#1b1b1e";
+    for (let i = 0; i < 15; i++) {
       ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvas.height);
-      ctx.stroke();
-    }
-    for (let y = 0; y < canvas.height; y += 32) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(canvas.width, y);
-      ctx.stroke();
+      const cx = Math.random() * canvas.width;
+      const cy = Math.random() * canvas.height;
+      const rx = Math.random() * 200 + 80;
+      const ry = Math.random() * 100 + 40;
+      ctx.ellipse(cx, cy, rx, ry, Math.random() * Math.PI, 0, Math.PI * 2);
+      ctx.fill();
     }
 
-    // Draw tech/creator districts as networks of nodes
-    const hubs = [
-      { x: 120, y: 150, r: 6, color: "#f5c842" }, // Creator District
-      { x: 380, y: 320, r: 7, color: "#00ffc8" }, // Commerce District
-      { x: 600, y: 220, r: 6, color: "#0088ff" }, // Innovation District
-      { x: 750, y: 400, r: 8, color: "#7a22ff" }, // Gaming District
-      { x: 900, y: 180, r: 5, color: "#ffeeb5" }, // Education District
-    ];
-
-    // Draw network connections
-    ctx.strokeStyle = "rgba(0, 255, 200, 0.15)";
-    ctx.lineWidth = 1;
-    for (let i = 0; i < hubs.length; i++) {
-      for (let j = i + 1; j < hubs.length; j++) {
-        ctx.beginPath();
-        ctx.moveTo(hubs[i].x, hubs[i].y);
-        ctx.lineTo(hubs[j].x, hubs[j].y);
-        ctx.stroke();
+    // 3. Draw clusters of warm-white and gold city lights representing active space settlements at night
+    const drawSettlement = (cx: number, cy: number, count: number, radius: number) => {
+      const px = (cx / 360 + 0.5) * canvas.width;
+      const py = (1.0 - (cy / 180 + 0.5)) * canvas.height;
+      for (let i = 0; i < count; i++) {
+        const dx = (Math.random() - 0.5) * radius;
+        const dy = (Math.random() - 0.5) * radius;
+        ctx.fillStyle = Math.random() > 0.3 ? "#ffd080" : "#ffeed0";
+        ctx.fillRect(px + dx, py + dy, Math.random() * 1.5 + 0.5, Math.random() * 1.5 + 0.5);
       }
+    };
+
+    drawSettlement(0, 20, 150, 30);
+    drawSettlement(120, -10, 100, 25);
+    drawSettlement(-60, 45, 120, 35);
+    drawSettlement(-120, -30, 110, 30);
+    drawSettlement(60, 60, 90, 25);
+    drawSettlement(180, 10, 80, 20);
+    drawSettlement(-10, -40, 70, 20);
+  } else if (type === "earth-clouds") {
+    // Transparent background
+    ctx.fillStyle = "rgba(0,0,0,0)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw thick white cloud patches with soft edges
+    for (let i = 0; i < 25; i++) {
+      const cx = Math.random() * canvas.width;
+      const cy = Math.random() * (canvas.height - 120) + 60;
+      const rx = Math.random() * 180 + 60;
+      const ry = Math.random() * 50 + 15;
+
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rx);
+      grad.addColorStop(0, "rgba(255, 255, 255, 0.85)");
+      grad.addColorStop(0.3, "rgba(255, 255, 255, 0.7)");
+      grad.addColorStop(0.7, "rgba(255, 255, 255, 0.2)");
+      grad.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rx, ry, Math.random() * 0.3 - 0.15, 0, Math.PI * 2);
+      ctx.fill();
     }
+  } else if (type === "earth-bump") {
+    // Oceans black (lowest point)
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    hubs.forEach((hub) => {
-      // Glow under the hub
-      const glowGrad = ctx.createRadialGradient(hub.x, hub.y, 0, hub.x, hub.y, hub.r * 5);
-      glowGrad.addColorStop(0, hub.color + "66");
-      glowGrad.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = glowGrad;
+    // Land height base (gray)
+    ctx.fillStyle = "#888888";
+    const drawContinentHeight = (coords: Array<[number, number]>) => {
       ctx.beginPath();
-      ctx.arc(hub.x, hub.y, hub.r * 5, 0, Math.PI * 2);
+      coords.forEach(([x, y], idx) => {
+        const px = (x / 360 + 0.5) * canvas.width;
+        const py = (1.0 - (y / 180 + 0.5)) * canvas.height;
+        if (idx === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      });
+      ctx.closePath();
       ctx.fill();
+    };
 
-      // Hub center
-      ctx.fillStyle = "#ffffff";
+    drawContinentHeight([
+      [-120, 60], [-80, 50], [-70, 10], [-40, -10],
+      [-70, -50], [-75, -55], [-70, -20], [-80, 0],
+      [-100, 15], [-110, 30]
+    ]);
+    drawContinentHeight([
+      [-15, 30], [30, 30], [50, 10], [40, -30],
+      [20, -35], [10, 0]
+    ]);
+    drawContinentHeight([
+      [-10, 60], [30, 70], [120, 70], [130, 35],
+      [100, 10], [80, 10], [50, 25], [35, 10], [10, 35]
+    ]);
+    drawContinentHeight([
+      [115, -20], [145, -15], [150, -35], [115, -30]
+    ]);
+    ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+
+    // Draw mountains only on land (using source-atop composite mode)
+    ctx.globalCompositeOperation = "source-atop";
+    ctx.fillStyle = "#cccccc";
+    for (let i = 0; i < 40; i++) {
       ctx.beginPath();
-      ctx.arc(hub.x, hub.y, hub.r, 0, Math.PI * 2);
+      ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, Math.random() * 15 + 5, 0, Math.PI * 2);
       ctx.fill();
-    });
+    }
+    // Restore composite operation
+    ctx.globalCompositeOperation = "source-over";
   }
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -541,16 +591,19 @@ export function createPlanet(
   const radius = sizes[type];
 
   if (type === "earth") {
-    // 1. Surface PBR MeshStandardMaterial
+    // 1. Surface PBR MeshStandardMaterial with bump mapping
     const earthDay = createProceduralTexture("earth-day");
     const earthNight = createProceduralTexture("earth-night");
     const earthSpec = createProceduralTexture("earth-specular");
+    const earthBump = createProceduralTexture("earth-bump");
 
     const earthMat = new THREE.MeshStandardMaterial({
       map: earthDay,
       roughnessMap: earthSpec,
       roughness: 0.7,
       metalness: 0.0,
+      bumpMap: earthBump,
+      bumpScale: 0.25,
       emissiveMap: earthNight,
       emissive: new THREE.Color(0xffd090),
       emissiveIntensity: 0.4,
@@ -561,11 +614,19 @@ export function createPlanet(
     body.receiveShadow = true;
     group.add(body);
 
-    // 2. Volumetric Cloud Shell
+    // 2. High-Fidelity Procedural Volumetric Cloud Shell
+    const earthCloudsTex = createProceduralTexture("earth-clouds");
+    const cloudsMat = new THREE.MeshStandardMaterial({
+      map: earthCloudsTex,
+      transparent: true,
+      blending: THREE.NormalBlending,
+      depthWrite: false,
+    });
     const clouds = new THREE.Mesh(
       new THREE.SphereGeometry(radius + 0.15, 64, 64),
-      new THREE.MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, depthWrite: false })
+      cloudsMat
     );
+    clouds.castShadow = true;
     group.add(clouds);
 
     // 3. Atmosphere Halo (Rayleigh scattering backside glow)
@@ -797,38 +858,47 @@ export function createPlanet(
   } else if (type === "genesis") {
     // 1. Cyber-obsidian texture body
     const genesisTex = createProceduralTexture("genesis");
+  } else if (type === "genesis") {
+    // 1. Dark volcanic surface texture body with warm gold glowing city light settlements
+    const genesisTex = createProceduralTexture("genesis");
     const body = new THREE.Mesh(
       new THREE.SphereGeometry(radius, 64, 64),
       new THREE.MeshStandardMaterial({
         map: genesisTex,
-        roughness: 0.25,
-        metalness: 0.85,
-        color: new THREE.Color(0xffffff),
+        roughness: 0.75,
+        metalness: 0.15,
+        emissiveMap: genesisTex,
+        emissive: new THREE.Color(0xffd080),
+        emissiveIntensity: 1.5, // Bright city settlements glowing in the dark
       })
     );
     body.castShadow = true;
     body.receiveShadow = true;
     group.add(body);
 
-    // 2. Holographic Coordinate Wireframe Grid Overlay
-    const gridGeo = new THREE.SphereGeometry(radius + 0.06, 32, 32);
-    const gridMat = new THREE.MeshBasicMaterial({
-      color: 0x00ffc8,
-      wireframe: true,
+    // 2. Translucent, slow-moving volcanic atmospheric cloud shell
+    const cloudTex = createProceduralTexture("earth-clouds");
+    const cloudsMat = new THREE.MeshStandardMaterial({
+      map: cloudTex,
       transparent: true,
-      opacity: 0.1,
+      color: new THREE.Color(0x9090a0), // colder/darker cloud tone
+      opacity: 0.18,
       depthWrite: false,
     });
-    const gridMesh = new THREE.Mesh(gridGeo, gridMat);
-    group.add(gridMesh);
+    const clouds = new THREE.Mesh(
+      new THREE.SphereGeometry(radius + 0.12, 64, 64),
+      cloudsMat
+    );
+    clouds.castShadow = true;
+    group.add(clouds);
 
-    // 3. Atmosphere Rayleigh scattering glow (cyan/teal)
+    // 3. Volcanic Atmosphere Rayleigh Scattering Glow (dusty orange/red horizon limb)
     const genesisAtmosphereMat = new THREE.ShaderMaterial({
       vertexShader: RayleighAtmosphereShader.vertexShader,
       fragmentShader: RayleighAtmosphereShader.fragmentShader,
       uniforms: {
         sunDirection: { value: new THREE.Vector3(30, 20, 40).normalize() },
-        glowColor: { value: new THREE.Color(0.0, 0.75, 0.6) },
+        glowColor: { value: new THREE.Color(0.85, 0.35, 0.15) },
         atmosphereThickness: { value: 0.14 },
       },
       blending: THREE.AdditiveBlending,
@@ -842,7 +912,7 @@ export function createPlanet(
     group.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
       if (prefersReducedMotion) return;
       body.rotation.y += 0.00008;
-      gridMesh.rotation.y -= 0.00003;
+      clouds.rotation.y += 0.000095;
     };
   }
 

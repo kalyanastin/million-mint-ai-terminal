@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -8,13 +8,13 @@
 :root {
     --void: #000000;
     --deep-space: #05050a;
-    --gold: #f5c842;
-    --gold-glow: rgba(245, 200, 66, 0.3);
-    --cyan: #00e5ff;
+    --gold: #ffd080; /* Refined soft/warm gold */
+    --gold-glow: rgba(255, 208, 128, 0.2);
+    --cyan: #00ffc8; /* Clean cyber cyan */
     --text: #ffffff;
-    --muted: #888888;
-    --glass: rgba(5, 5, 10, 0.3);
-    --glass-border: rgba(255, 255, 255, 0.08);
+    --muted: #a1a1aa; /* Silver-grey mute */
+    --glass: rgba(8, 8, 12, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.05); /* Titanium/silver frame */
     --cyber-blue: #0088ff;
     --cyber-purple: #7a22ff;
     --cyber-cyan: #00ffc8;
@@ -36,7 +36,7 @@ html {
 body {
     background: var(--void);
     color: var(--text);
-    font-family: 'Syne', sans-serif;
+    font-family: 'Inter', sans-serif;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -51,12 +51,12 @@ body {
     background: var(--void);
 }
 ::-webkit-scrollbar-thumb {
-    background: rgba(245, 200, 66, 0.2);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 3px;
     transition: background 0.3s ease;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--gold);
+    background: var(--glass-border);
 }
 
 /* ── 3D CANVAS LAYOUT ── */
@@ -86,35 +86,36 @@ section {
     padding: 120px 5%;
 }
 
-/* ── GLASSMorphic HUD MODULES ── */
+/* ── GLASSMorphic HUD MODULES (Apple-Style Titanium) ── */
 .glass-module {
     background: var(--glass);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
+    backdrop-filter: blur(50px);
+    -webkit-backdrop-filter: blur(50px);
     border: 1px solid var(--glass-border);
     padding: 50px;
-    border-radius: 4px;
+    border-radius: 6px;
     max-width: 1100px;
     width: 100%;
     transition: border-color 0.4s ease, background 0.4s ease, box-shadow 0.4s ease;
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(255, 255, 255, 0.02);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.85), inset 0 0 1px rgba(255, 255, 255, 0.08);
     pointer-events: auto; /* Restores mouse events for interactive UI cards */
 }
 
 .glass-module:hover {
-    border-color: var(--gold);
-    background: rgba(255, 255, 255, 0.04);
-    box-shadow: 0 40px 100px rgba(245, 200, 66, 0.05), inset 0 0 25px rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.15); /* Muted silver border highlight */
+    background: rgba(255, 255, 255, 0.02);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.95), inset 0 0 1px rgba(255, 255, 255, 0.15);
 }
 
 /* ── TYPOGRAPHY ── */
 .hero-title {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
     font-size: clamp(75px, 14vw, 200px);
-    line-height: 0.8;
+    line-height: 0.85;
     text-align: center;
-    letter-spacing: 12px;
-    background: linear-gradient(to bottom, #ffffff 40%, var(--gold));
+    letter-spacing: -0.04em; /* Tight letter spacing */
+    background: linear-gradient(to bottom, #ffffff 40%, #a1a1aa 100%); /* Premium silver/white gradient */
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-transform: uppercase;
@@ -122,30 +123,32 @@ section {
 
 .eyebrow {
     font-family: 'Space Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 6px;
-    color: var(--cyan);
+    font-size: 10px;
+    letter-spacing: 5px;
+    color: var(--muted);
     text-transform: uppercase;
     margin-bottom: 25px;
     text-align: center;
-    text-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
 }
 
 .section-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(40px, 5vw, 75px);
-    color: var(--gold);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: clamp(36px, 5vw, 68px);
+    background: linear-gradient(to bottom, #ffffff 30%, #a1a1aa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     margin-bottom: 25px;
-    line-height: 1;
-    letter-spacing: 1px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
     text-transform: uppercase;
 }
 
 .description {
-    font-size: 16px;
-    color: #cccccc;
-    line-height: 1.8;
-    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    color: #d1d1d6;
+    line-height: 1.7;
+    font-family: 'Inter', sans-serif;
     max-width: 800px;
 }
 
@@ -161,28 +164,29 @@ section {
     padding: 25px;
     border: 1px solid var(--glass-border);
     background: rgba(255, 255, 255, 0.01);
-    border-radius: 2px;
+    border-radius: 4px;
     transition: all 0.3s ease;
 }
 
 .data-card:hover {
-    border-color: var(--gold);
-    background: rgba(245, 200, 66, 0.02);
-    transform: translateY(-5px);
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.02);
+    transform: translateY(-2px);
 }
 
 .data-card h3 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 24px;
-    color: var(--gold);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+    color: #ffffff;
     margin-bottom: 12px;
-    letter-spacing: 1px;
+    letter-spacing: -0.01em;
 }
 
 .data-card p {
-    font-family: 'Space Mono', monospace;
+    font-family: 'Inter', sans-serif;
     font-size: 13px;
-    color: var(--muted);
+    color: #a1a1aa;
     line-height: 1.6;
 }
 
@@ -203,37 +207,36 @@ section {
 
 .comp-table th {
     background: rgba(255, 255, 255, 0.03);
-    color: var(--gold);
+    color: #ffffff;
     text-transform: uppercase;
     letter-spacing: 2px;
 }
 
 .highlight {
     color: var(--gold);
-    font-weight: 700;
-    text-shadow: 0 0 10px rgba(245, 200, 66, 0.2);
+    font-weight: 600;
 }
 
 /* ── BUTTONS ── */
 .btn-gold {
     margin-top: 40px;
-    padding: 16px 45px;
-    background: var(--gold);
+    padding: 15px 40px;
+    background: linear-gradient(135deg, #ffd080 0%, #e5d5b0 100%); /* Refined soft-gold champagne */
     color: #000000;
     font-family: 'Space Mono', monospace;
     font-weight: 700;
     text-transform: uppercase;
     border: none;
     cursor: pointer;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     transition: all 0.3s ease;
-    border-radius: 2px;
-    box-shadow: 0 4px 15px rgba(245, 200, 66, 0.1);
+    border-radius: 4px;
+    box-shadow: 0 4px 15px rgba(255, 208, 128, 0.15);
 }
 
 .btn-gold:hover {
-    box-shadow: 0 0 35px var(--gold-glow);
-    transform: scale(1.04);
+    box-shadow: 0 0 25px rgba(255, 208, 128, 0.45);
+    transform: translateY(-2px);
 }
 
 /* ── NAVIGATION ── */
@@ -248,17 +251,18 @@ nav {
     z-index: 100;
     font-family: 'Space Mono', monospace;
     font-size: 10px;
-    letter-spacing: 3px;
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    letter-spacing: 2px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.03);
 }
 
 .logo {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 28px;
-    color: var(--gold);
-    letter-spacing: 4px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 24px;
+    color: #ffffff;
+    letter-spacing: -0.03em;
 }
 
 .nav-links a {
@@ -266,13 +270,12 @@ nav {
     text-decoration: none;
     margin-left: 25px;
     transition: all 0.3s ease;
-    opacity: 0.5;
+    opacity: 0.55;
 }
 
 .nav-links a:hover {
     opacity: 1;
-    color: var(--gold);
-    text-shadow: 0 0 8px rgba(245, 200, 66, 0.3);
+    color: #ffffff;
 }
 
 /* ── UTILITIES & HACKS ── */
@@ -280,3 +283,4 @@ nav {
     opacity: 1;
     transform: none;
 }
+

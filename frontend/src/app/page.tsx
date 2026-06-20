@@ -1,15 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
-import dynamic from "next/dynamic";
+import React, { useState } from "react";
 import { GlassModule } from "../components/GlassModule";
 import { WaitlistModal } from "../components/WaitlistModal";
-
-// Dynamic import of the WebGL Space Canvas to bypass SSR issues during Next.js builds
-const SpaceUniverse = dynamic(
-  () => import("../components/SpaceUniverse").then((mod) => mod.SpaceUniverse),
-  { ssr: false }
-);
 
 // High-fidelity vector SVG logo component matching the brand image
 function MillionMintLogo({ size = 180 }: { size?: number }) {
@@ -72,28 +65,7 @@ function NavLogo() {
 }
 
 export default function Home() {
-  const [scrollProgress, setScrollProgress] = useState(0);
   const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
-
-  // Track global scroll height to interpolate 3D camera coordinates across the 9 sections (index 0 to 8)
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrolled = window.scrollY;
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      if (maxScroll <= 0) return;
-      
-      // Interpolate progress linearly between 0 (Hero) and 8 (Final Builders Section)
-      const progress = (scrolled / maxScroll) * 8;
-      setScrollProgress(progress);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
 
   const handleDescend = () => {
     document.getElementById("vision")?.scrollIntoView({ behavior: "smooth" });
@@ -102,16 +74,6 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-black text-white relative">
       
-      {/* ── 3D WEBGL BACKGROUND LAYER ── */}
-      <Suspense fallback={
-        <div className="fixed inset-0 flex flex-col items-center justify-center bg-black z-50 font-mono text-xs text-[#00ffc8]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00ffc8] mb-4"></div>
-          CONNECTING ORBITAL TELEMETRY...
-        </div>
-      }>
-        <SpaceUniverse scrollProgress={scrollProgress} />
-      </Suspense>
-
       {/* ── PERSISTENT HUD NAVIGATION ── */}
       <nav>
         <a href="/" className="cursor-pointer hover:opacity-80 transition-opacity">

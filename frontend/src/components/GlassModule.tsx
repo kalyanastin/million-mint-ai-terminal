@@ -13,8 +13,28 @@ export function GlassModule({ children, className = "", style = {} }: GlassModul
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const [yOffset, setYOffset] = useState(0);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  // Check prefers-reduced-motion
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+      setPrefersReducedMotion(mediaQuery.matches);
+      
+      const listener = (e: MediaQueryListEvent) => {
+        setPrefersReducedMotion(e.matches);
+      };
+      mediaQuery.addEventListener("change", listener);
+      return () => mediaQuery.removeEventListener("change", listener);
+    }
+  }, []);
 
   useEffect(() => {
+    if (prefersReducedMotion) {
+      setYOffset(0);
+      return;
+    }
+
     // Zero-G idle floating drift
     let animFrameId: number;
     let startTime = Math.random() * 100;
@@ -28,9 +48,11 @@ export function GlassModule({ children, className = "", style = {} }: GlassModul
 
     tick();
     return () => cancelAnimationFrame(animFrameId);
-  }, []);
+  }, [prefersReducedMotion]);
 
   useEffect(() => {
+    if (prefersReducedMotion) return;
+
     const handleMouseMove = (e: MouseEvent) => {
       if (!isHovered || !cardRef.current) return;
       const rect = cardRef.current.getBoundingClientRect();
@@ -50,7 +72,7 @@ export function GlassModule({ children, className = "", style = {} }: GlassModul
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
     };
-  }, [isHovered]);
+  }, [isHovered, prefersReducedMotion]);
 
   return (
     <div
@@ -58,12 +80,20 @@ export function GlassModule({ children, className = "", style = {} }: GlassModul
       className={`glass-module ${className}`}
       style={{
         ...style,
-        transform: isHovered
-          ? `perspective(1000px) rotateX(${tilt.y}deg) rotateY(${tilt.x}deg) translateY(${yOffset - 3}px)`
-          : `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(${yOffset}px)`,
-        transition: isHovered ? "transform 0.05s ease-out" : "transform 0.5s ease"
+        transform: prefersReducedMotion
+          ? "none"
+          : isHovered
+            ? `perspective(1000px) rotateX(${tilt.y}deg) rotateY(${tilt.x}deg) translateY(${yOffset - 3}px)`
+            : `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(${yOffset}px)`,
+        transition: prefersReducedMotion
+          ? "none"
+          : isHovered
+            ? "transform 0.05s ease-out"
+            : "transform 0.5s ease"
       }}
-      onMouseEnter={() => setIsHovered(true)}
+      onMouseEnter={() => {
+        if (!prefersReducedMotion) setIsHovered(true);
+      }}
       onMouseLeave={() => {
         setIsHovered(false);
         setTilt({ x: 0, y: 0 });
@@ -73,3 +103,4 @@ export function GlassModule({ children, className = "", style = {} }: GlassModul
     </div>
   );
 }
+

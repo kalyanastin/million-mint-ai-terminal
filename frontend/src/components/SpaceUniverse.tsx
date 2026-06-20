@@ -188,7 +188,7 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     earthShine.position.set(0, 0, 0);
     scene.add(earthShine);
 
-    // 4. Billboard Sun Flare Glow
+    // 4. Billboard Sun Flare Glow & Core Mesh
     const flareGroup = new THREE.Group();
     flareGroup.position.set(200, 50, 300);
     // Draw simple procedural glow sprite
@@ -214,10 +214,19 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     }));
     flareSprite.scale.set(50, 50, 1);
     flareGroup.add(flareSprite);
+
+    // Glowing white Sun core mesh
+    const sunGeom = new THREE.SphereGeometry(15, 32, 32);
+    const sunMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      blending: THREE.AdditiveBlending,
+    });
+    const sunMesh = new THREE.Mesh(sunGeom, sunMat);
+    flareGroup.add(sunMesh);
     scene.add(flareGroup);
 
-    // 5. Double-Layered Starfield Spheres (For organic depth parallax)
-    const starGeo1 = new THREE.SphereGeometry(800, 32, 32);
+    // 5. Triple-Layered Starfield Spheres (For organic depth parallax)
+    const starGeo1 = new THREE.SphereGeometry(900, 32, 32);
     const starTex = createStarfieldTexture();
     const starMat1 = new THREE.MeshBasicMaterial({
       map: starTex,
@@ -227,7 +236,7 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     const starField1 = new THREE.Mesh(starGeo1, starMat1);
     scene.add(starField1);
 
-    const starGeo2 = new THREE.SphereGeometry(450, 32, 32);
+    const starGeo2 = new THREE.SphereGeometry(600, 32, 32);
     const starMat2 = new THREE.MeshBasicMaterial({
       map: starTex,
       side: THREE.BackSide,
@@ -237,6 +246,17 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     });
     const starField2 = new THREE.Mesh(starGeo2, starMat2);
     scene.add(starField2);
+
+    const starGeo3 = new THREE.SphereGeometry(350, 32, 32);
+    const starMat3 = new THREE.MeshBasicMaterial({
+      map: starTex,
+      side: THREE.BackSide,
+      color: new THREE.Color(0x222222),
+      transparent: true,
+      opacity: 0.4,
+    });
+    const starField3 = new THREE.Mesh(starGeo3, starMat3);
+    scene.add(starField3);
 
     // 6. Zero Gravity Newtonian Physics
     const physics = new ZeroGravityPhysics();
@@ -297,9 +317,9 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     moonGroup.position.set(12, 5, -22);
     scene.add(moonGroup);
 
-    // Stage 3: Genesis Planet (replacing Mars/Venus)
+    // Stage 3: Genesis Planet
     const genesisGroup = createPlanet("genesis");
-    genesisGroup.position.set(0, -6, -55);
+    genesisGroup.position.set(18, 0, -45);
     scene.add(genesisGroup);
 
     // Stage 5: Asteroid Belt
@@ -333,17 +353,17 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     neptuneGroup.position.set(-40, 20, -190);
     scene.add(neptuneGroup);
 
-    // 9. Camera spring-dynamics paths
+    // 9. Camera spring-dynamics paths (All aligned to keep Earth visible, with route-specific centerpieces)
     const pathPoints = [
-      { pos: [0, 8, -20], target: [0, 0, 0] },           // 0: Hero (Behind Earth)
+      { pos: [0, 8, -20], target: [0, 0, 0] },           // 0: Hero (Behind Earth closeup)
       { pos: [9, 5.5, -12], target: [12, 5, -22] },       // 1: Vision (Moon closeup)
-      { pos: [0, -3, -38], target: [0, -6, -55] },        // 2: Land (Genesis Descent)
-      { pos: [0, 0, -68], target: [0, 0, -110] },        // 3: Create (Asteroid Belt)
-      { pos: [18, 4, -120], target: [24, 0, -135] },     // 4: Earn (MMINT Orbital Gateway)
-      { pos: [5, 2, -158], target: [0, 0, -175] },       // 5: Economy (Creator fleet)
-      { pos: [-6, 12, -200], target: [-15, 10, -225] },  // 6: Ecosystem (Saturn ring passage)
-      { pos: [20, 20, -195], target: [55, 30, -150] },   // 7: Roadmap (Flyby Jupiter/Neptune)
-      { pos: [0, 95, -240], target: [0, 0, -110] }       // 8: Final Builders (Observatory Lookback)
+      { pos: [-7, 3, -8], target: [-6, 2, -5] },         // 2: Land/About (ISS & Earth Horizon)
+      { pos: [15, 6, -30], target: [18, 0, -45] },       // 3: Create/Genesis (Volcanic Genesis Planet)
+      { pos: [20, 2, -125], target: [24, 0, -135] },     // 4: Earn/Token (MMINT Gateway & Earth)
+      { pos: [5, 2, -158], target: [0, 0, -175] },       // 5: Economy/Fleet (Creator fleet & Earth)
+      { pos: [-12, 10, -12], target: [0, 0, 0] },        // 6: Ecosystem/Whitepaper (Earth Rayleigh Scattering)
+      { pos: [6, 4, -18], target: [0, 0, 0] },           // 7: Roadmap (Earth-Moon orbit focus)
+      { pos: [0, 15, -22], target: [0, 0, 0] }           // 8: Final/Founder (Observatory Earth Lookback)
     ];
 
     const currentPos = new THREE.Vector3(0, 10, -20);
@@ -370,7 +390,7 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     window.addEventListener("resize", handleResize, { passive: true });
 
     // Camera update function using scroll interpolation & spring-damper easing
-    const updateCamera = (delta: number, prefersReducedMotion?: boolean) => {
+    const updateCamera = (time: number, delta: number, prefersReducedMotion?: boolean) => {
       const maxIdx = pathPoints.length - 1;
       const progress = Math.min(Math.max(scrollRef.current, 0), maxIdx);
       const idx = Math.floor(progress);
@@ -387,6 +407,21 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
         .fromArray(currentPoint.target)
         .lerp(new THREE.Vector3().fromArray(nextPoint.target), frac);
 
+      // 30-second camera drift cycle: 12 seconds of active drift, 18 seconds of absolute stabilization pause
+      const cycleTime = time % 30;
+      let driftX = 0;
+      let driftY = 0;
+      let driftZ = 0;
+
+      if (!prefersReducedMotion && cycleTime < 12) {
+        // Smooth sine envelope for the 12-second drift window to prevent jerky transitions
+        const envelope = Math.sin((cycleTime / 12) * Math.PI);
+        // Zero-G double-cosine oscillators for slow cinematic drift
+        driftX = Math.sin(time * 0.5) * 0.12 * envelope;
+        driftY = Math.cos(time * 0.3) * 0.08 * envelope;
+        driftZ = Math.sin(time * 0.4) * 0.06 * envelope;
+      }
+
       // Apply zero-G spring offsets based on mouse coordinates
       if (prefersReducedMotion) {
         currentMouseOffset.x = 0;
@@ -402,8 +437,9 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
 
       camera.position.copy(currentPos);
       if (!prefersReducedMotion) {
-        camera.position.x += currentMouseOffset.x;
-        camera.position.y += currentMouseOffset.y;
+        camera.position.x += currentMouseOffset.x + driftX;
+        camera.position.y += currentMouseOffset.y + driftY;
+        camera.position.z += driftZ;
 
         // Proximity camera vibration from ship drives / orbital docks
         const distToShipyard = camera.position.distanceTo(new THREE.Vector3(24, 0, -135));
@@ -451,10 +487,13 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
       // Rotate flare group towards camera
       flareGroup.lookAt(camera.position);
 
-      // Rotate background stars slowly (double-layered parallax)
+      // Rotate background stars slowly (triple-layered parallax) at prime-factored rates to eliminate repeats
       if (!prefersReducedMotion) {
-        starField1.rotation.y = time * 0.0002;
-        starField2.rotation.y = time * 0.0005;
+        starField1.rotation.y = time * 0.0001;
+        starField2.rotation.x = time * 0.00017;
+        starField2.rotation.y = time * 0.00023;
+        starField3.rotation.z = time * 0.00031;
+        starField3.rotation.y = time * 0.00013;
       }
 
       // Scene traversals for elements containing animations and thruster plumes
@@ -473,7 +512,7 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
       updateBelt(time, delta, prefersReducedMotion);
 
       // Apply spring dynamics to camera coords
-      updateCamera(delta, prefersReducedMotion);
+      updateCamera(time, delta, prefersReducedMotion);
 
       // Render frame
       renderer.render(scene, camera);

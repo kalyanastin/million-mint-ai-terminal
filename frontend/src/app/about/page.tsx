@@ -1,14 +1,7 @@
 "use client";
 
-import React, { Suspense } from "react";
-import dynamic from "next/dynamic";
+import React from "react";
 import { GlassModule } from "../../components/GlassModule";
-
-// Dynamic import of the WebGL Space Canvas to bypass SSR issues during Next.js builds
-const SpaceUniverse = dynamic(
-  () => import("../../components/SpaceUniverse").then((mod) => mod.SpaceUniverse),
-  { ssr: false }
-);
 
 function NavLogo() {
   return (
@@ -31,17 +24,6 @@ function NavLogo() {
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-black text-white relative">
-      
-      {/* ── 3D WEBGL BACKGROUND LAYER ── */}
-      <Suspense fallback={
-        <div className="fixed inset-0 flex flex-col items-center justify-center bg-black z-50 font-mono text-xs text-[#00ffc8]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00ffc8] mb-4"></div>
-          CONNECTING ORBITAL TELEMETRY...
-        </div>
-      }>
-        {/* Pass a static progress value to set a beautiful floating background */}
-        <SpaceUniverse scrollProgress={1.5} />
-      </Suspense>
 
       {/* ── PERSISTENT HUD NAVIGATION ── */}
       <nav>
@@ -50,6 +32,7 @@ export default function AboutPage() {
         </a>
         <div className="nav-links hidden md:flex">
           <a href="/about" className="opacity-100 text-[#00ffc8]">ABOUT</a>
+          <a href="/planet/genesis">PLANET</a>
           <a href="/roadmap">ROADMAP</a>
           <a href="/token">TOKEN</a>
           <a href="/whitepaper">WHITEPAPER</a>
