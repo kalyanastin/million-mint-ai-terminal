@@ -283,7 +283,7 @@ export function WaitlistModal({ isOpen, onClose, onSuccess }: WaitlistModalProps
 
             <div className="flex flex-col gap-3 mt-6">
               <a 
-                href="https://x.com/millionmint" 
+                href="https://x.com/kalyanchow369" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="w-full p-3 border border-zinc-800 hover:border-white bg-zinc-900/40 text-white rounded text-xs transition-colors block text-center"
