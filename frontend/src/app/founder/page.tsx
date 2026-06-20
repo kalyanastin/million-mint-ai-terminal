@@ -93,9 +93,9 @@ export default function FounderPage() {
                 </p>
               </div>
 
-              {/* SECTION 3: WHAT EXISTS TODAY */}
+              {/* SECTION 3: WHAT WE'RE BUILDING TODAY */}
               <div className="border-b border-[rgba(255,255,255,0.06)] pb-8">
-                <h2 className="text-xl font-bold text-[#0088ff] uppercase tracking-wider mb-4">3. What Exists Today</h2>
+                <h2 className="text-xl font-bold text-[#0088ff] uppercase tracking-wider mb-4">3. What We're Building Today</h2>
                 <p>
                   We believe in showing real progress. Today, the initial foundation of Million Mint is live and fully interactive:
                 </p>

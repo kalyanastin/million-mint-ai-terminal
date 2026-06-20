@@ -153,10 +153,31 @@ export default function PlanetGenesisPage() {
     const ambient = new THREE.AmbientLight(0x222233, 0.5);
     scene.add(ambient);
 
-    // 4. Create the Planet (Genesis Planet, using "earth" procedural generator)
-    const planetGroup = createPlanet("earth");
+    // 4. Create the Planet (Genesis Planet, using "genesis" custom generator)
+    const planetGroup = createPlanet("genesis");
     scene.add(planetGroup);
     planetGroupRef.current = planetGroup;
+
+    // Add Moon orbiting the Genesis planet
+    const moonGroup = createPlanet("moon");
+    moonGroup.scale.set(0.25, 0.25, 0.25);
+    scene.add(moonGroup);
+
+    // Add distant background planets for realism & depth
+    const bgEarth = createPlanet("earth");
+    bgEarth.scale.set(0.18, 0.18, 0.18);
+    bgEarth.position.set(-18, 8, -20);
+    scene.add(bgEarth);
+
+    const bgMars = createPlanet("mars");
+    bgMars.scale.set(0.12, 0.12, 0.12);
+    bgMars.position.set(20, -6, -22);
+    scene.add(bgMars);
+
+    const bgSaturn = createPlanet("saturn");
+    bgSaturn.scale.set(0.14, 0.14, 0.14);
+    bgSaturn.position.set(-14, -10, -30);
+    scene.add(bgSaturn);
 
     // 5. Interactive Drag Rotation Controls
     let isDragging = false;
@@ -225,9 +246,41 @@ export default function PlanetGenesisPage() {
         targetRotation.current.y += 0.0006;
       }
 
+      const prefersReducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      if (!prefersReducedMotion) {
+        // Orbit the moon around the Genesis planet
+        const moonOrbitRadius = 13;
+        moonGroup.position.set(
+          Math.cos(time * 0.25) * moonOrbitRadius,
+          Math.sin(time * 0.1) * 2.5,
+          Math.sin(time * 0.25) * moonOrbitRadius
+        );
+        
+        // Update background planets
+        bgEarth.rotation.y += 0.002;
+        bgMars.rotation.y += 0.003;
+        bgSaturn.rotation.y += 0.0015;
+      } else {
+        // Static position for moon when reduced motion is on
+        moonGroup.position.set(11, 2, -5);
+      }
+
       // Update procedural animations on planet textures/clouds
       if (planetGroup && planetGroup.userData.update) {
-        planetGroup.userData.update(time, delta);
+        planetGroup.userData.update(time, delta, prefersReducedMotion);
+      }
+      if (moonGroup.userData.update) {
+        moonGroup.userData.update(time, delta, prefersReducedMotion);
+      }
+      if (bgEarth.userData.update) {
+        bgEarth.userData.update(time, delta, prefersReducedMotion);
+      }
+      if (bgMars.userData.update) {
+        bgMars.userData.update(time, delta, prefersReducedMotion);
+      }
+      if (bgSaturn.userData.update) {
+        bgSaturn.userData.update(time, delta, prefersReducedMotion);
       }
 
       renderer.render(scene, camera);

@@ -5,7 +5,18 @@ import * as THREE from "three";
 // ── PROCEDURAL PLANETARY TEXTURE GENERATORS (Zero network requests, zero CORS) ──
 
 function createProceduralTexture(
-  type: "earth-day" | "earth-night" | "earth-specular" | "moon" | "mars" | "saturn" | "saturn-ring" | "venus" | "jupiter" | "neptune"
+  type:
+    | "earth-day"
+    | "earth-night"
+    | "earth-specular"
+    | "moon"
+    | "mars"
+    | "saturn"
+    | "saturn-ring"
+    | "venus"
+    | "jupiter"
+    | "neptune"
+    | "genesis"
 ) {
   if (typeof window === "undefined") return new THREE.Texture();
 
@@ -252,6 +263,64 @@ function createProceduralTexture(
     for (let i = 0; i < 4; i++) {
       ctx.fillRect(0, Math.random() * canvas.height, canvas.width, Math.random() * 60 + 20);
     }
+  } else if (type === "genesis") {
+    // Cyber-obsidian network planet
+    ctx.fillStyle = "#0a0c10"; // Deep space obsidian base
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw grid coordinate lines in background
+    ctx.strokeStyle = "rgba(0, 255, 200, 0.05)";
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < canvas.width; x += 32) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, canvas.height);
+      ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += 32) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+
+    // Draw tech/creator districts as networks of nodes
+    const hubs = [
+      { x: 120, y: 150, r: 6, color: "#f5c842" }, // Creator District
+      { x: 380, y: 320, r: 7, color: "#00ffc8" }, // Commerce District
+      { x: 600, y: 220, r: 6, color: "#0088ff" }, // Innovation District
+      { x: 750, y: 400, r: 8, color: "#7a22ff" }, // Gaming District
+      { x: 900, y: 180, r: 5, color: "#ffeeb5" }, // Education District
+    ];
+
+    // Draw network connections
+    ctx.strokeStyle = "rgba(0, 255, 200, 0.15)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < hubs.length; i++) {
+      for (let j = i + 1; j < hubs.length; j++) {
+        ctx.beginPath();
+        ctx.moveTo(hubs[i].x, hubs[i].y);
+        ctx.lineTo(hubs[j].x, hubs[j].y);
+        ctx.stroke();
+      }
+    }
+
+    hubs.forEach((hub) => {
+      // Glow under the hub
+      const glowGrad = ctx.createRadialGradient(hub.x, hub.y, 0, hub.x, hub.y, hub.r * 5);
+      glowGrad.addColorStop(0, hub.color + "66");
+      glowGrad.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = glowGrad;
+      ctx.beginPath();
+      ctx.arc(hub.x, hub.y, hub.r * 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Hub center
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(hub.x, hub.y, hub.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
   }
 
   const texture = new THREE.CanvasTexture(canvas);
@@ -452,7 +521,9 @@ const NeptuneShader = {
 
 // ── MAIN CREATOR FUNCTION ──
 
-export function createPlanet(type: "earth" | "moon" | "mars" | "saturn" | "venus" | "jupiter" | "neptune") {
+export function createPlanet(
+  type: "earth" | "moon" | "mars" | "saturn" | "venus" | "jupiter" | "neptune" | "genesis"
+) {
   const group = new THREE.Group();
 
   // Planet radius sizes
@@ -464,6 +535,7 @@ export function createPlanet(type: "earth" | "moon" | "mars" | "saturn" | "venus
     jupiter: 18.0,
     saturn: 8.5,
     neptune: 12.0,
+    genesis: 8.0,
   };
 
   const radius = sizes[type];
@@ -509,7 +581,8 @@ export function createPlanet(type: "earth" | "moon" | "mars" | "saturn" | "venus
     const halo = new THREE.Mesh(new THREE.SphereGeometry(radius + 0.4, 32, 32), atmosphereMat);
     group.add(halo);
 
-    group.userData.update = (time: number, delta: number) => {
+    group.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+      if (prefersReducedMotion) return;
       body.rotation.y += 0.000072;
       clouds.rotation.y += 0.000082;
     };
@@ -528,7 +601,8 @@ export function createPlanet(type: "earth" | "moon" | "mars" | "saturn" | "venus
     body.receiveShadow = true;
     group.add(body);
 
-    group.userData.update = (time: number, delta: number) => {
+    group.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+      if (prefersReducedMotion) return;
       body.rotation.y += 0.000011; // tidally locked spin
     };
   } else if (type === "mars") {
@@ -559,7 +633,8 @@ export function createPlanet(type: "earth" | "moon" | "mars" | "saturn" | "venus
     const halo = new THREE.Mesh(new THREE.SphereGeometry(radius + 0.25, 32, 32), marsAtmosphereMat);
     group.add(halo);
 
-    group.userData.update = (time: number, delta: number) => {
+    group.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+      if (prefersReducedMotion) return;
       body.rotation.y += 0.00007;
     };
   } else if (type === "venus") {
@@ -595,7 +670,8 @@ export function createPlanet(type: "earth" | "moon" | "mars" | "saturn" | "venus
       group.add(cloud);
     });
 
-    group.userData.update = (time: number, delta: number) => {
+    group.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+      if (prefersReducedMotion) return;
       body.rotation.y -= 0.000005; // slow retrograde spin
     };
   } else if (type === "jupiter") {
@@ -632,9 +708,10 @@ export function createPlanet(type: "earth" | "moon" | "mars" | "saturn" | "venus
     const halo = new THREE.Mesh(new THREE.SphereGeometry(radius + 0.4, 32, 32), jupiterAtmosphereMat);
     group.add(halo);
 
-    group.userData.update = (time: number, delta: number) => {
+    group.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+      jupiterMat.uniforms.time.value = prefersReducedMotion ? 0 : time;
+      if (prefersReducedMotion) return;
       body.rotation.y += 0.00018;
-      jupiterMat.uniforms.time.value = time;
     };
   } else if (type === "saturn") {
     const saturnTex = createProceduralTexture("saturn");
@@ -673,7 +750,8 @@ export function createPlanet(type: "earth" | "moon" | "mars" | "saturn" | "venus
     rings.receiveShadow = true;
     group.add(rings);
 
-    group.userData.update = (time: number, delta: number) => {
+    group.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+      if (prefersReducedMotion) return;
       body.rotation.y += 0.00015;
       rings.rotation.z = time * 0.015;
     };
@@ -711,9 +789,60 @@ export function createPlanet(type: "earth" | "moon" | "mars" | "saturn" | "venus
     const halo = new THREE.Mesh(new THREE.SphereGeometry(radius + 0.35, 32, 32), neptuneAtmosphereMat);
     group.add(halo);
 
-    group.userData.update = (time: number, delta: number) => {
+    group.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+      neptuneMat.uniforms.time.value = prefersReducedMotion ? 0 : time;
+      if (prefersReducedMotion) return;
       body.rotation.y += 0.00016;
-      neptuneMat.uniforms.time.value = time;
+    };
+  } else if (type === "genesis") {
+    // 1. Cyber-obsidian texture body
+    const genesisTex = createProceduralTexture("genesis");
+    const body = new THREE.Mesh(
+      new THREE.SphereGeometry(radius, 64, 64),
+      new THREE.MeshStandardMaterial({
+        map: genesisTex,
+        roughness: 0.25,
+        metalness: 0.85,
+        color: new THREE.Color(0xffffff),
+      })
+    );
+    body.castShadow = true;
+    body.receiveShadow = true;
+    group.add(body);
+
+    // 2. Holographic Coordinate Wireframe Grid Overlay
+    const gridGeo = new THREE.SphereGeometry(radius + 0.06, 32, 32);
+    const gridMat = new THREE.MeshBasicMaterial({
+      color: 0x00ffc8,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.1,
+      depthWrite: false,
+    });
+    const gridMesh = new THREE.Mesh(gridGeo, gridMat);
+    group.add(gridMesh);
+
+    // 3. Atmosphere Rayleigh scattering glow (cyan/teal)
+    const genesisAtmosphereMat = new THREE.ShaderMaterial({
+      vertexShader: RayleighAtmosphereShader.vertexShader,
+      fragmentShader: RayleighAtmosphereShader.fragmentShader,
+      uniforms: {
+        sunDirection: { value: new THREE.Vector3(30, 20, 40).normalize() },
+        glowColor: { value: new THREE.Color(0.0, 0.75, 0.6) },
+        atmosphereThickness: { value: 0.14 },
+      },
+      blending: THREE.AdditiveBlending,
+      side: THREE.BackSide,
+      transparent: true,
+      depthWrite: false,
+    });
+    const halo = new THREE.Mesh(new THREE.SphereGeometry(radius + 0.3, 32, 32), genesisAtmosphereMat);
+    group.add(halo);
+
+    group.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+      if (prefersReducedMotion) return;
+      body.rotation.y += 0.00008;
+      gridMesh.rotation.y -= 0.00003;
     };
   }
 

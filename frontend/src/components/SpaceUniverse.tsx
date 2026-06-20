@@ -4,7 +4,7 @@ import React, { useRef, useEffect } from "react";
 import * as THREE from "three";
 import { createPlanet } from "./PlanetSphere";
 import { createAsteroidBelt } from "./AsteroidBelt";
-import { createSpaceShipyard, createSpacecraftFleet, createSatellite } from "./SpacecraftFleet";
+import { createSpaceShipyard, createSpacecraftFleet, createSatellite, createISS } from "./SpacecraftFleet";
 import { updateThrusterPlume } from "./ThrusterPlume";
 
 interface SpaceUniverseProps {
@@ -121,10 +121,25 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef(scrollProgress);
 
-  // Sync scrollProgress in real-time
+  // State/Ref to track prefers-reduced-motion
+  const prefersReducedMotionRef = useRef(false);
+
   useEffect(() => {
     scrollRef.current = scrollProgress;
   }, [scrollProgress]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+      prefersReducedMotionRef.current = mediaQuery.matches;
+
+      const listener = (e: MediaQueryListEvent) => {
+        prefersReducedMotionRef.current = e.matches;
+      };
+      mediaQuery.addEventListener("change", listener);
+      return () => mediaQuery.removeEventListener("change", listener);
+    }
+  }, []);
 
   useEffect(() => {
     const container = mountRef.current;
@@ -201,16 +216,27 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     flareGroup.add(flareSprite);
     scene.add(flareGroup);
 
-    // 5. Starfield Sphere
-    const starGeo = new THREE.SphereGeometry(800, 64, 64);
+    // 5. Double-Layered Starfield Spheres (For organic depth parallax)
+    const starGeo1 = new THREE.SphereGeometry(800, 32, 32);
     const starTex = createStarfieldTexture();
-    const starMat = new THREE.MeshBasicMaterial({
+    const starMat1 = new THREE.MeshBasicMaterial({
       map: starTex,
       side: THREE.BackSide,
-      color: new THREE.Color(0x888888),
+      color: new THREE.Color(0x666666),
     });
-    const starField = new THREE.Mesh(starGeo, starMat);
-    scene.add(starField);
+    const starField1 = new THREE.Mesh(starGeo1, starMat1);
+    scene.add(starField1);
+
+    const starGeo2 = new THREE.SphereGeometry(450, 32, 32);
+    const starMat2 = new THREE.MeshBasicMaterial({
+      map: starTex,
+      side: THREE.BackSide,
+      color: new THREE.Color(0x333333),
+      transparent: true,
+      opacity: 0.6,
+    });
+    const starField2 = new THREE.Mesh(starGeo2, starMat2);
+    scene.add(starField2);
 
     // 6. Zero Gravity Newtonian Physics
     const physics = new ZeroGravityPhysics();
@@ -254,39 +280,40 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     const earthGroup = createPlanet("earth");
     scene.add(earthGroup);
 
+    // Hubble Space Telescope
     const satellite = createSatellite();
     satellite.position.set(12, 1, 0);
     satellite.scale.set(0.5, 0.5, 0.5);
-    satellite.rotation.y = Math.PI / 4;
     scene.add(satellite);
+
+    // ISS (International Space Station) floating near Earth
+    const iss = createISS();
+    iss.position.set(-6, 2, -5);
+    iss.scale.set(0.6, 0.6, 0.6);
+    scene.add(iss);
 
     // Stage 2: Moon
     const moonGroup = createPlanet("moon");
     moonGroup.position.set(12, 5, -22);
     scene.add(moonGroup);
 
-    // Stage 3: Mars
-    const marsGroup = createPlanet("mars");
-    marsGroup.position.set(0, -6, -55);
-    scene.add(marsGroup);
-
-    // Stage 4: Venus
-    const venusGroup = createPlanet("venus");
-    venusGroup.position.set(-25, -15, -45);
-    scene.add(venusGroup);
+    // Stage 3: Genesis Planet (replacing Mars/Venus)
+    const genesisGroup = createPlanet("genesis");
+    genesisGroup.position.set(0, -6, -55);
+    scene.add(genesisGroup);
 
     // Stage 5: Asteroid Belt
     const { group: asteroidBelt, update: updateBelt } = createAsteroidBelt();
     asteroidBelt.position.set(0, 0, -90);
     scene.add(asteroidBelt);
 
-    // Stage 6: Shipyard Spaceport
+    // Stage 6: MMINT Orbital Gateway
     const shipyard = createSpaceShipyard();
     shipyard.position.set(24, 0, -135);
     shipyard.rotation.y = -Math.PI / 6;
     scene.add(shipyard);
 
-    // Stage 7: Fleet
+    // Stage 7: MMINT Creator Fleet
     const fleet = createSpacecraftFleet();
     fleet.position.set(0, 0, -175);
     scene.add(fleet);
@@ -310,10 +337,10 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     const pathPoints = [
       { pos: [0, 8, -20], target: [0, 0, 0] },           // 0: Hero (Behind Earth)
       { pos: [9, 5.5, -12], target: [12, 5, -22] },       // 1: Vision (Moon closeup)
-      { pos: [0, -3, -38], target: [0, -6, -55] },        // 2: Land (Mars Descent)
+      { pos: [0, -3, -38], target: [0, -6, -55] },        // 2: Land (Genesis Descent)
       { pos: [0, 0, -68], target: [0, 0, -110] },        // 3: Create (Asteroid Belt)
-      { pos: [18, 4, -120], target: [24, 0, -135] },     // 4: Earn (Orbital Shipyard)
-      { pos: [5, 2, -158], target: [0, 0, -175] },       // 5: Economy (Formation fleet)
+      { pos: [18, 4, -120], target: [24, 0, -135] },     // 4: Earn (MMINT Orbital Gateway)
+      { pos: [5, 2, -158], target: [0, 0, -175] },       // 5: Economy (Creator fleet)
       { pos: [-6, 12, -200], target: [-15, 10, -225] },  // 6: Ecosystem (Saturn ring passage)
       { pos: [20, 20, -195], target: [55, 30, -150] },   // 7: Roadmap (Flyby Jupiter/Neptune)
       { pos: [0, 95, -240], target: [0, 0, -110] }       // 8: Final Builders (Observatory Lookback)
@@ -343,7 +370,7 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     window.addEventListener("resize", handleResize, { passive: true });
 
     // Camera update function using scroll interpolation & spring-damper easing
-    const updateCamera = (delta: number) => {
+    const updateCamera = (delta: number, prefersReducedMotion?: boolean) => {
       const maxIdx = pathPoints.length - 1;
       const progress = Math.min(Math.max(scrollRef.current, 0), maxIdx);
       const idx = Math.floor(progress);
@@ -361,27 +388,34 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
         .lerp(new THREE.Vector3().fromArray(nextPoint.target), frac);
 
       // Apply zero-G spring offsets based on mouse coordinates
-      currentMouseOffset.x += (mouse.x * 2.8 - currentMouseOffset.x) * 0.05;
-      currentMouseOffset.y += (-mouse.y * 2.8 - currentMouseOffset.y) * 0.05;
+      if (prefersReducedMotion) {
+        currentMouseOffset.x = 0;
+        currentMouseOffset.y = 0;
+      } else {
+        currentMouseOffset.x += (mouse.x * 2.8 - currentMouseOffset.x) * 0.05;
+        currentMouseOffset.y += (-mouse.y * 2.8 - currentMouseOffset.y) * 0.05;
+      }
 
       // Spring lerp (4% position spring, 6% rotation spring)
       currentPos.lerp(targetPos, 0.04);
       currentLook.lerp(targetLook, 0.06);
 
       camera.position.copy(currentPos);
-      camera.position.x += currentMouseOffset.x;
-      camera.position.y += currentMouseOffset.y;
+      if (!prefersReducedMotion) {
+        camera.position.x += currentMouseOffset.x;
+        camera.position.y += currentMouseOffset.y;
 
-      // Proximity camera vibration from ship drives / orbital docks
-      const distToShipyard = camera.position.distanceTo(new THREE.Vector3(24, 0, -135));
-      const distToFleet = camera.position.distanceTo(new THREE.Vector3(0, 0, -175));
-      const closestDist = Math.min(distToShipyard, distToFleet);
+        // Proximity camera vibration from ship drives / orbital docks
+        const distToShipyard = camera.position.distanceTo(new THREE.Vector3(24, 0, -135));
+        const distToFleet = camera.position.distanceTo(new THREE.Vector3(0, 0, -175));
+        const closestDist = Math.min(distToShipyard, distToFleet);
 
-      if (closestDist < 25) {
-        const shakeIntensity = (25 - closestDist) * 0.008;
-        camera.position.x += (Math.random() - 0.5) * shakeIntensity;
-        camera.position.y += (Math.random() - 0.5) * shakeIntensity;
-        camera.position.z += (Math.random() - 0.5) * shakeIntensity;
+        if (closestDist < 25) {
+          const shakeIntensity = (25 - closestDist) * 0.008;
+          camera.position.x += (Math.random() - 0.5) * shakeIntensity;
+          camera.position.y += (Math.random() - 0.5) * shakeIntensity;
+          camera.position.z += (Math.random() - 0.5) * shakeIntensity;
+        }
       }
 
       camera.lookAt(currentLook);
@@ -392,46 +426,54 @@ export function SpaceUniverse({ scrollProgress }: SpaceUniverseProps) {
     const animate = (timestamp: number) => {
       if (isDestroyed) return;
 
+      const prefersReducedMotion = prefersReducedMotionRef.current;
       const time = timestamp * 0.001;
       const delta = Math.min(0.1, time - lastTime); // clamp frame spikes
       lastTime = time;
 
       // Physics stepping
-      physics.step(delta);
+      physics.step(prefersReducedMotion ? 0 : delta);
 
       // Living events (shooting stars crossing the galaxy)
-      const starCycle = (time * 0.55) % 9.0;
-      if (starCycle < 1.4) {
-        const t = starCycle / 1.4;
-        shootingStar.position.set(-90 + t * 180, 45 - t * 55, -80 - t * 90);
-        shootingStar.scale.setScalar(1.3 - t);
-      } else {
+      if (prefersReducedMotion) {
         shootingStar.position.set(999, 999, 999);
+      } else {
+        const starCycle = (time * 0.55) % 9.0;
+        if (starCycle < 1.4) {
+          const t = starCycle / 1.4;
+          shootingStar.position.set(-90 + t * 180, 45 - t * 55, -80 - t * 90);
+          shootingStar.scale.setScalar(1.3 - t);
+        } else {
+          shootingStar.position.set(999, 999, 999);
+        }
       }
 
       // Rotate flare group towards camera
       flareGroup.lookAt(camera.position);
 
-      // Rotate background stars slowly
-      starField.rotation.y = time * 0.0004;
+      // Rotate background stars slowly (double-layered parallax)
+      if (!prefersReducedMotion) {
+        starField1.rotation.y = time * 0.0002;
+        starField2.rotation.y = time * 0.0005;
+      }
 
       // Scene traversals for elements containing animations and thruster plumes
       scene.traverse((child) => {
         // Run specific element update hooks (warning lights, rotating drums, ships trajectories)
         if (child.userData.update) {
-          child.userData.update(time, delta);
+          child.userData.update(time, delta, prefersReducedMotion);
         }
         // Run particle plume expansion physics
         if (child instanceof THREE.Points && child.userData.velocities) {
-          updateThrusterPlume(child, delta);
+          updateThrusterPlume(child, delta, prefersReducedMotion);
         }
       });
 
       // Update Asteroid Belt custom operations (laser flickering, instanced orbits)
-      updateBelt(time, delta);
+      updateBelt(time, delta, prefersReducedMotion);
 
       // Apply spring dynamics to camera coords
-      updateCamera(delta);
+      updateCamera(delta, prefersReducedMotion);
 
       // Render frame
       renderer.render(scene, camera);

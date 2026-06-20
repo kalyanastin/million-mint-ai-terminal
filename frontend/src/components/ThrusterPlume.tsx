@@ -96,7 +96,9 @@ export function createThrusterPlume(color = "#88aaff", count = 300, scale = 1.0)
   return points;
 }
 
-export function updateThrusterPlume(plume: THREE.Points, delta: number) {
+export function updateThrusterPlume(plume: THREE.Points, delta: number, prefersReducedMotion?: boolean) {
+  if (prefersReducedMotion) return;
+
   const geometry = plume.geometry;
   const posAttr = geometry.attributes.position;
   const opacAttr = geometry.attributes.opacity;

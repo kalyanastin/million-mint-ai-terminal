@@ -244,7 +244,8 @@ export function createAstronaut() {
   );
   astronautGroup.add(tether);
 
-  astronautGroup.userData.update = (time: number) => {
+  astronautGroup.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+    if (prefersReducedMotion) return;
     // Float zero-g drift tumbles
     innerGroup.position.y = Math.sin(time * 0.8) * 0.4;
     innerGroup.position.x = Math.cos(time * 0.5) * 0.2;
@@ -255,71 +256,54 @@ export function createAstronaut() {
   return astronautGroup;
 }
 
-// ── SCOUT INTERCEPTOR JET ──
-export function createScoutShip() {
-  const scoutGroup = new THREE.Group();
+// ── CREATOR CRUISER ──
+export function createCreatorCruiser() {
+  const cruiser = new THREE.Group();
 
-  const lathePoints = [
-    new THREE.Vector2(0, 0),
-    new THREE.Vector2(0.08, 0.5),
-    new THREE.Vector2(0.15, 1.2), // Max thickness
-    new THREE.Vector2(0.12, 2.0),
-    new THREE.Vector2(0.06, 2.8),
-    new THREE.Vector2(0.0, 3.0),
-  ];
+  // Sleek aerodynamic main hull (white)
+  const hullGeo = new THREE.CylinderGeometry(0.2, 0.4, 2.2, 16);
+  const hullMat = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.3,
+    metalness: 0.1,
+  });
+  const hull = new THREE.Mesh(hullGeo, hullMat);
+  hull.rotation.x = Math.PI / 2;
+  hull.castShadow = true;
+  cruiser.add(hull);
 
-  // Aerodynamic Wing Lathe Fuselage
-  const fuselage = new THREE.Mesh(
-    new THREE.LatheGeometry(lathePoints, 24),
-    new THREE.MeshStandardMaterial({ color: 0x222230, roughness: 0.9, metalness: 0.1 })
-  );
-  fuselage.rotation.x = Math.PI / 2;
-  fuselage.castShadow = true;
-  scoutGroup.add(fuselage);
+  // Tapered nosecone
+  const noseGeo = new THREE.ConeGeometry(0.2, 0.6, 16);
+  const nose = new THREE.Mesh(noseGeo, hullMat);
+  nose.position.set(0, 0, 1.4);
+  nose.rotation.x = Math.PI / 2;
+  cruiser.add(nose);
 
-  // Swept delta wing shape
+  // Golden solar panel wings
+  const panelMat = new THREE.MeshStandardMaterial({
+    color: 0xd4a030,
+    metalness: 0.9,
+    roughness: 0.2,
+  });
   [-1, 1].forEach((side) => {
-    const wingShape = new THREE.Shape();
-    wingShape.moveTo(0, 0);
-    wingShape.lineTo(side * 2.2, -0.8);
-    wingShape.lineTo(side * 0.8, 1.4);
-    wingShape.closePath();
-    const wingMesh = new THREE.Mesh(
-      new THREE.ShapeGeometry(wingShape),
-      new THREE.MeshStandardMaterial({ color: 0x1a1a28, roughness: 0.85, metalness: 0.15, side: THREE.DoubleSide })
-    );
-    wingMesh.position.z = 0.8;
-    wingMesh.castShadow = true;
-    scoutGroup.add(wingMesh);
+    const wingGeo = new THREE.BoxGeometry(1.6, 0.02, 0.4);
+    const wing = new THREE.Mesh(wingGeo, panelMat);
+    wing.position.set(side * 0.9, 0, 0.1);
+    cruiser.add(wing);
   });
 
-  // Nacelle thrust pods
-  [-0.4, 0.4].forEach((xOffset) => {
-    const podGroup = new THREE.Group();
-    podGroup.position.set(xOffset, -0.1, 1.8);
+  // Subtly glowing engine exhaust
+  const enginePlume = createThrusterPlume("#00ffc8", 80, 0.3);
+  enginePlume.position.set(0, 0, -1.25);
+  enginePlume.rotation.x = Math.PI / 2;
+  cruiser.add(enginePlume);
 
-    const nacelle = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.12, 0.18, 0.8, 16),
-      new THREE.MeshStandardMaterial({ color: 0x505060, metalness: 0.8, roughness: 0.4 })
-    );
-    nacelle.rotation.x = Math.PI / 2;
-    nacelle.castShadow = true;
-    podGroup.add(nacelle);
-
-    // Active exhaust gas particle system
-    const plume = createThrusterPlume("#00ffc8", 100, 0.4);
-    plume.position.set(0, 0, 0.4);
-    plume.rotation.x = Math.PI;
-    podGroup.add(plume);
-
-    scoutGroup.add(podGroup);
-  });
-
-  scoutGroup.userData.update = (time: number) => {
-    scoutGroup.position.y = Math.sin(time * 2.0) * 0.2;
+  cruiser.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+    if (prefersReducedMotion) return;
+    cruiser.position.y = Math.sin(time * 0.5) * 0.1;
   };
 
-  return scoutGroup;
+  return cruiser;
 }
 
 // ── PRESSURIZED INDUSTRIAL CARGO SPACECRAFT ──
@@ -392,183 +376,123 @@ export function createCargoShip() {
   return cargoGroup;
 }
 
-// ── HABITAT EXPLORER CRUISER ──
-export function createExplorerShip() {
-  const explorer = new THREE.Group();
+// ── HUBBLE SPACE TELESCOPE ──
+export function createHubbleTelescope() {
+  const hubble = new THREE.Group();
 
-  const mylarFoil = createCrinkledFoilTexture();
-  const panelNormal = createPanelNormalMap();
+  // Silver cylindrical body
+  const bodyGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.8, 16);
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: 0xcccccc,
+    metalness: 0.9,
+    roughness: 0.1,
+  });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  body.rotation.x = Math.PI / 2;
+  body.castShadow = true;
+  hubble.add(body);
 
-  // Command Module (truncated capsule cone)
-  const cmd = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.4, 0.6, 0.9, 24),
-    new THREE.MeshStandardMaterial({ color: 0xc8c8c0, roughness: 0.85, metalness: 0.1, normalMap: panelNormal })
-  );
-  cmd.position.y = 2.1;
-  cmd.castShadow = true;
-  explorer.add(cmd);
+  // Aperture door (open cap at one end)
+  const doorGeo = new THREE.BoxGeometry(0.4, 0.02, 0.4);
+  const door = new THREE.Mesh(doorGeo, bodyMat);
+  door.position.set(0, 0.4, 0.95);
+  door.rotation.x = -Math.PI / 4;
+  hubble.add(door);
 
-  // Service Module (gold MLI crinkle foil blanket)
-  const service = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.55, 0.55, 1.8, 24),
-    new THREE.MeshStandardMaterial({
-      color: 0xd4a030,
-      metalness: 0.7,
-      roughness: 0.5,
-      bumpMap: mylarFoil,
-      bumpScale: 0.08,
-    })
-  );
-  service.position.y = 0.75;
-  service.castShadow = true;
-  explorer.add(service);
-
-  // Rotating Torus Habitat Ring
-  const wheelGroup = new THREE.Group();
-  wheelGroup.position.set(0, 0, 0);
-
-  const torus = new THREE.Mesh(
-    new THREE.TorusGeometry(1.8, 0.22, 16, 64),
-    new THREE.MeshStandardMaterial({ color: 0x9a9a9a, metalness: 0.5, roughness: 0.7, normalMap: panelNormal })
-  );
-  torus.rotation.x = Math.PI / 2;
-  torus.castShadow = true;
-  wheelGroup.add(torus);
-
-  // Support structural spokes
-  for (let i = 0; i < 4; i++) {
-    const angle = (i / 4) * Math.PI * 2;
-    const spoke = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.04, 0.04, 1.8, 8),
-      new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8, roughness: 0.6 })
-    );
-    spoke.position.set(Math.cos(angle) * 0.9, 0, Math.sin(angle) * 0.9);
-    spoke.rotation.set(0, -angle, Math.PI / 2);
-    spoke.castShadow = true;
-    wheelGroup.add(spoke);
-  }
-  explorer.add(wheelGroup);
-
-  // Photovoltaic Solar Panel double-wing arrays
+  // Golden/copper solar panels
+  const panelMat = new THREE.MeshStandardMaterial({
+    color: 0xd4a030,
+    metalness: 0.7,
+    roughness: 0.3,
+  });
   [-1, 1].forEach((side) => {
-    const armGroup = new THREE.Group();
-    armGroup.position.set(side * 1.5, 0.9, 0);
+    const panelGroup = new THREE.Group();
+    panelGroup.position.set(side * 0.75, 0, 0);
 
-    const support = new THREE.Mesh(
-      new THREE.BoxGeometry(0.06, 0.06, 2.4),
-      new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.9, roughness: 0.3 })
-    );
-    support.castShadow = true;
-    armGroup.add(support);
+    const armGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.4, 8);
+    const arm = new THREE.Mesh(armGeo, bodyMat);
+    arm.rotation.z = Math.PI / 2;
+    panelGroup.add(arm);
 
-    // Silicon cell mesh
-    const cells = new THREE.Mesh(
-      new THREE.BoxGeometry(2.0, 0.02, 0.9),
-      new THREE.MeshStandardMaterial({
-        color: 0x1a1a3e,
-        emissive: 0x0011aa,
-        emissiveIntensity: 0.08,
-        roughness: 0.2,
-        metalness: 0.0,
-        normalMap: panelNormal,
-      })
-    );
-    cells.position.x = side * 1.1;
-    cells.castShadow = true;
-    armGroup.add(cells);
+    const solarGeo = new THREE.BoxGeometry(0.1, 0.02, 1.4);
+    const solar = new THREE.Mesh(solarGeo, panelMat);
+    solar.position.x = side * 0.2;
+    panelGroup.add(solar);
 
-    explorer.add(armGroup);
+    hubble.add(panelGroup);
   });
 
-  // Main engine thrust nozzle bell
-  const engineGroup = new THREE.Group();
-  engineGroup.position.set(0, -0.6, 0);
+  // Antennas / dishes
+  const dishGeo = new THREE.ConeGeometry(0.15, 0.1, 8, 1, true);
+  const dish = new THREE.Mesh(dishGeo, panelMat);
+  dish.position.set(0, -0.45, 0);
+  dish.rotation.x = Math.PI;
+  hubble.add(dish);
 
-  const nozzle = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.5, 0.18, 0.6, 24, 1, true),
-    new THREE.MeshStandardMaterial({ color: 0x604010, metalness: 0.9, roughness: 0.3, side: THREE.DoubleSide })
-  );
-  nozzle.castShadow = true;
-  engineGroup.add(nozzle);
-
-  // Additive exhaust jet fire
-  const plume = createThrusterPlume("#88aaff", 350, 0.7);
-  plume.position.set(0, -0.3, 0);
-  plume.rotation.x = Math.PI;
-  engineGroup.add(plume);
-
-  explorer.add(engineGroup);
-
-  explorer.userData.update = (time: number, delta: number) => {
-    wheelGroup.rotation.z += delta * 0.3; // 1 RPM artificial gravity spin
+  hubble.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+    if (prefersReducedMotion) return;
+    hubble.rotation.y = time * 0.03;
+    hubble.rotation.x = time * 0.01;
   };
 
-  return explorer;
+  return hubble;
 }
 
-// ── AGILE HIGH SPEED FIGHTER JET ──
-export function createFighterJet(offset = 0) {
-  const jet = new THREE.Group();
+// ── INTERNATIONAL SPACE STATION (ISS) ──
+export function createISS() {
+  const iss = new THREE.Group();
 
-  // Delta Wing Fuselage
-  const fuselage = new THREE.Mesh(
-    new THREE.ConeGeometry(0.22, 1.2, 4),
-    new THREE.MeshStandardMaterial({ color: 0x606066, metalness: 0.9, roughness: 0.2 })
-  );
-  fuselage.rotation.x = Math.PI / 2;
-  fuselage.castShadow = true;
-  jet.add(fuselage);
+  const metalMat = new THREE.MeshStandardMaterial({
+    color: 0x999999,
+    metalness: 0.9,
+    roughness: 0.2,
+  });
 
-  // Back wings sweep
-  const wings = new THREE.Mesh(
-    new THREE.BoxGeometry(1.4, 0.02, 0.4),
-    new THREE.MeshStandardMaterial({ color: 0x18181c, metalness: 0.8, roughness: 0.4 })
-  );
-  wings.position.set(0, -0.05, -0.2);
-  wings.rotation.x = Math.PI / 2;
-  wings.castShadow = true;
-  jet.add(wings);
+  const copperMat = new THREE.MeshStandardMaterial({
+    color: 0xb87333, // Copper/gold
+    metalness: 0.8,
+    roughness: 0.4,
+  });
 
-  // Thruster Engine exhaust bell
-  const engineGroup = new THREE.Group();
-  engineGroup.position.set(0, 0, -0.65);
+  // Central long truss structure
+  const trussGeo = new THREE.BoxGeometry(0.1, 0.1, 7.5);
+  const truss = new THREE.Mesh(trussGeo, metalMat);
+  iss.add(truss);
 
-  const bell = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.1, 0.07, 0.2, 8),
-    new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9 })
-  );
-  bell.rotation.x = Math.PI / 2;
-  bell.castShadow = true;
-  engineGroup.add(bell);
+  // Central cylindrical modules (hab/labs)
+  const moduleGeo = new THREE.CylinderGeometry(0.28, 0.28, 1.2, 12);
+  const coreModule = new THREE.Mesh(moduleGeo, metalMat);
+  coreModule.rotation.x = Math.PI / 2;
+  iss.add(coreModule);
 
-  const plume = createThrusterPlume("#00ffc8", 150, 0.3);
-  plume.position.set(0, 0, -0.1);
-  plume.rotation.x = Math.PI / 2;
-  engineGroup.add(plume);
+  const nodeGeo = new THREE.SphereGeometry(0.3, 12, 12);
+  const coreNode = new THREE.Mesh(nodeGeo, metalMat);
+  iss.add(coreNode);
 
-  jet.add(engineGroup);
+  // Cross modules
+  const crossModule = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.6, 12), metalMat);
+  crossModule.position.set(0, 0, 0.4);
+  iss.add(crossModule);
 
-  jet.userData.update = (time: number) => {
-    const speed = 1.4;
-    const radiusX = 14;
-    const radiusY = 6;
+  // Solar array wings at the ends of the truss
+  const arrayWings = [-3.2, 3.2];
+  arrayWings.forEach((zOffset) => {
+    // 4 large solar panels on each side
+    [-0.8, -0.3, 0.3, 0.8].forEach((xOffset) => {
+      const panelGeo = new THREE.BoxGeometry(1.4, 0.02, 0.45);
+      const panel = new THREE.Mesh(panelGeo, copperMat);
+      panel.position.set(xOffset * 1.5, 0, zOffset);
+      iss.add(panel);
+    });
+  });
 
-    const angle = (time + offset) * speed;
-    jet.position.x = Math.cos(angle) * radiusX + (offset * 12);
-    jet.position.y = Math.sin(angle * 2.0) * radiusY;
-    jet.position.z = -175 + Math.sin(angle) * 15;
-
-    const targetRoll = -Math.sin(angle) * 0.8;
-    jet.rotation.z += (targetRoll - jet.rotation.z) * 0.1;
-
-    jet.lookAt(
-      Math.cos(angle + 0.15) * radiusX + (offset * 12),
-      Math.sin((angle + 0.15) * 2.0) * radiusY,
-      -175 + Math.sin(angle + 0.15) * 15
-    );
+  iss.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+    if (prefersReducedMotion) return;
+    iss.rotation.y = time * 0.015;
+    iss.rotation.x = time * 0.005;
   };
 
-  return jet;
+  return iss;
 }
 
 // ── ORBITAL DOCKING SHIPYARD ──
@@ -651,24 +575,24 @@ export function createSpaceShipyard() {
   astronaut.rotation.y = Math.PI / 2;
   shipyard.add(astronaut);
 
-  // Explorer Cruiser docked at the platform
-  const dockedExplorer = createExplorerShip();
+  // Creator Cruiser docked at the platform
+  const dockedExplorer = createCreatorCruiser();
   dockedExplorer.position.set(7.5, 0, 0);
   dockedExplorer.rotation.z = Math.PI / 2;
   dockedExplorer.scale.set(0.45, 0.45, 0.45);
   shipyard.add(dockedExplorer);
 
-  shipyard.userData.update = (time: number, delta: number) => {
-    gravityHub.rotation.y = time * 0.08;
-    
-    // Update beacons strobe
+  shipyard.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
     const strobe = Math.sin(time * 8.0) > 0.0;
     beaconMatRed.color.setHex(strobe ? 0xff0040 : 0x200005);
     beaconMatGreen.color.setHex(strobe ? 0x00ff40 : 0x002005);
 
+    if (prefersReducedMotion) return;
+    gravityHub.rotation.y = time * 0.04;
+    
     // Delegate updates to children
-    astronaut.userData.update?.(time, delta);
-    dockedExplorer.userData.update?.(time, delta);
+    astronaut.userData.update?.(time, delta, prefersReducedMotion);
+    dockedExplorer.userData.update?.(time, delta, prefersReducedMotion);
   };
 
   return shipyard;
@@ -678,109 +602,42 @@ export function createSpaceShipyard() {
 export function createSpacecraftFleet() {
   const fleetGroup = new THREE.Group();
 
-  // 1. Large Industrial Cargo Ship
+  // 1. Large Cargo Container Ship
   const cargo = createCargoShip();
   fleetGroup.add(cargo);
 
-  // 2. Escort Explorer Cruiser
-  const explorer = createExplorerShip();
-  explorer.position.set(-12, 4, -4);
-  explorer.scale.set(0.8, 0.8, 0.8);
-  explorer.rotation.x = 0.05;
-  fleetGroup.add(explorer);
+  // 2. Creator Cruiser
+  const cruiser = createCreatorCruiser();
+  cruiser.position.set(-12, 4, -4);
+  cruiser.scale.set(1.2, 1.2, 1.2);
+  cruiser.rotation.x = 0.05;
+  fleetGroup.add(cruiser);
 
-  // 3. Escort Scouts
-  const scoutL = createScoutShip();
-  scoutL.position.set(8, 3, 6);
-  scoutL.scale.set(0.6, 0.6, 0.6);
-  scoutL.rotation.z = -Math.PI / 6;
-  fleetGroup.add(scoutL);
+  // 3. Companion mapping probes
+  const probe1 = createHubbleTelescope();
+  probe1.position.set(8, 3, 6);
+  probe1.scale.set(0.8, 0.8, 0.8);
+  fleetGroup.add(probe1);
 
-  const scoutR = createScoutShip();
-  scoutR.position.set(-9, -3, 8);
-  scoutR.scale.set(0.6, 0.6, 0.6);
-  scoutR.rotation.z = Math.PI / 6;
-  fleetGroup.add(scoutR);
+  const probe2 = createHubbleTelescope();
+  probe2.position.set(-9, -3, 8);
+  probe2.scale.set(0.8, 0.8, 0.8);
+  fleetGroup.add(probe2);
 
-  // 4. Active Banking Fighter Formation
-  const jet1 = createFighterJet(0);
-  const jet2 = createFighterJet(Math.PI * 0.6);
-  const jet3 = createFighterJet(Math.PI * 1.3);
-  fleetGroup.add(jet1);
-  fleetGroup.add(jet2);
-  fleetGroup.add(jet3);
-
-  fleetGroup.userData.update = (time: number, delta: number) => {
-    fleetGroup.position.z = -175 + Math.sin(time * 0.05) * 6;
+  fleetGroup.userData.update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
+    if (prefersReducedMotion) return;
+    fleetGroup.position.z = -175 + Math.sin(time * 0.03) * 3;
 
     // Propagate updates to children
-    explorer.userData.update?.(time, delta);
-    scoutL.userData.update?.(time, delta);
-    scoutR.userData.update?.(time, delta);
-    jet1.userData.update?.(time, delta);
-    jet2.userData.update?.(time, delta);
-    jet3.userData.update?.(time, delta);
+    cruiser.userData.update?.(time, delta, prefersReducedMotion);
+    probe1.userData.update?.(time, delta, prefersReducedMotion);
+    probe2.userData.update?.(time, delta, prefersReducedMotion);
   };
 
   return fleetGroup;
 }
 
-// ── SATELLITE SYSTEM ARRAY ──
+// ── SATELLITE SYSTEM ARRAY (Hubble Space Telescope) ──
 export function createSatellite() {
-  const sat = new THREE.Group();
-  const panelNormal = createPanelNormalMap();
-
-  // Central probe body
-  const body = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.3, 0.3, 1.2, 8),
-    new THREE.MeshStandardMaterial({ color: 0x6e6e76, metalness: 0.9, roughness: 0.1, normalMap: panelNormal })
-  );
-  body.castShadow = true;
-  sat.add(body);
-
-  // High-gain dish antenna
-  const dish = new THREE.Mesh(
-    new THREE.ConeGeometry(0.5, 0.4, 16, 1, true),
-    new THREE.MeshStandardMaterial({ color: 0xe5caa0, metalness: 0.8, roughness: 0.2, side: THREE.DoubleSide })
-  );
-  dish.position.y = 0.7;
-  sat.add(dish);
-
-  const feed = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.02, 0.02, 0.4, 8),
-    new THREE.MeshBasicMaterial({ color: 0xffffff })
-  );
-  feed.position.y = 0.9;
-  sat.add(feed);
-
-  // Solar Panel Wings
-  [-1.2, 1.2].forEach((xPos) => {
-    const wingGroup = new THREE.Group();
-    wingGroup.position.x = xPos;
-
-    const panel = new THREE.Mesh(
-      new THREE.BoxGeometry(1.5, 0.02, 0.6),
-      new THREE.MeshStandardMaterial({ color: 0x0b1d33, emissive: 0x00ffc8, emissiveIntensity: 0.2, roughness: 0.1 })
-    );
-    panel.castShadow = true;
-    wingGroup.add(panel);
-
-    const boom = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.03, 0.03, 0.8, 8),
-      new THREE.MeshStandardMaterial({ color: 0x44444c, metalness: 0.9 })
-    );
-    boom.position.x = -xPos * 0.3;
-    boom.rotation.z = Math.PI / 2;
-    boom.castShadow = true;
-    wingGroup.add(boom);
-
-    sat.add(wingGroup);
-  });
-
-  sat.userData.update = (time: number) => {
-    sat.rotation.y = time * 0.05;
-    sat.rotation.x = time * 0.02;
-  };
-
-  return sat;
+  return createHubbleTelescope();
 }

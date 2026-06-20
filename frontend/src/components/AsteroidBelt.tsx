@@ -74,85 +74,58 @@ export function createAsteroidBelt() {
   secondRockMesh.receiveShadow = true;
   group.add(secondRockMesh);
 
-  // 3. RESOURCE EXTRACTION PLATFORM
-  const platformGroup = new THREE.Group();
-  platformGroup.position.set(0, 0, -2);
+  // 3. ROBOTIC MAPPING PROBE (Replacing Refinery Platform & Neon Laser)
+  const probeGroup = new THREE.Group();
+  probeGroup.position.set(0, 2.5, -2);
 
-  // Anchor asteroid
-  const anchorGeom = new THREE.DodecahedronGeometry(2.0, 1);
-  const anchorMat = new THREE.MeshStandardMaterial({
-    color: 0x1a1a1f,
-    roughness: 0.9,
-  });
-  const anchorMesh = new THREE.Mesh(anchorGeom, anchorMat);
-  anchorMesh.castShadow = true;
-  platformGroup.add(anchorMesh);
-
-  // Industrial Platform Structure
-  const boxGeom = new THREE.BoxGeometry(2.5, 0.4, 2.5);
-  const boxMat = new THREE.MeshStandardMaterial({
-    color: 0x404046,
-    metalness: 0.9,
+  // Golden probe body
+  const bodyGeo = new THREE.BoxGeometry(0.7, 0.7, 0.7);
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: 0xd4a030,
+    metalness: 0.8,
     roughness: 0.3,
   });
-  const boxMesh = new THREE.Mesh(boxGeom, boxMat);
-  boxMesh.position.set(0, 1.4, 0);
-  boxMesh.castShadow = true;
-  platformGroup.add(boxMesh);
+  const probeBody = new THREE.Mesh(bodyGeo, bodyMat);
+  probeGroup.add(probeBody);
 
-  // Truss pillars connecting down
-  const pillarGeom = new THREE.CylinderGeometry(0.2, 0.2, 1.4, 8);
-  const pillarMat = new THREE.MeshStandardMaterial({
-    color: 0x222222,
-    metalness: 0.95,
+  // Solar panels extending out
+  const metalMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.95 });
+  const solarMat = new THREE.MeshStandardMaterial({ color: 0x0b1d33, roughness: 0.1 });
+  [-1, 1].forEach((side) => {
+    const armGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.6, 8);
+    const arm = new THREE.Mesh(armGeo, metalMat);
+    arm.position.x = side * 0.5;
+    arm.rotation.z = Math.PI / 2;
+    probeGroup.add(arm);
+
+    const solarGeo = new THREE.BoxGeometry(0.8, 0.02, 0.55);
+    const solar = new THREE.Mesh(solarGeo, solarMat);
+    solar.position.x = side * 1.1;
+    probeGroup.add(solar);
   });
-  const pillarMesh = new THREE.Mesh(pillarGeom, pillarMat);
-  pillarMesh.position.set(0, 0.7, 0);
-  pillarMesh.castShadow = true;
-  platformGroup.add(pillarMesh);
 
-  // Glowing refinery stacks (vertical tubes)
-  const stackGeom = new THREE.CylinderGeometry(0.15, 0.15, 1.2, 8);
-  const stackMesh = new THREE.Mesh(stackGeom, boxMat);
-  stackMesh.position.set(0.6, 2.2, 0.6);
-  stackMesh.castShadow = true;
-  platformGroup.add(stackMesh);
+  // High gain dish antenna
+  const dishGeo = new THREE.ConeGeometry(0.25, 0.15, 12, 1, true);
+  const dish = new THREE.Mesh(dishGeo, bodyMat);
+  dish.position.y = 0.45;
+  probeGroup.add(dish);
 
-  const glowGeom = new THREE.SphereGeometry(0.1, 8, 8);
-  const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ffc8 });
-  const glowMesh = new THREE.Mesh(glowGeom, glowMat);
-  glowMesh.position.set(0.6, 2.8, 0.6);
-  platformGroup.add(glowMesh);
-
-  // Solar panels for power
-  const panelGeom = new THREE.BoxGeometry(1.8, 0.02, 1.0);
-  const panelMat = new THREE.MeshStandardMaterial({
-    color: 0x0b1d33,
-    emissive: 0x00ffc8,
-    emissiveIntensity: 0.2,
-  });
-  const panelMesh = new THREE.Mesh(panelGeom, panelMat);
-  panelMesh.position.set(-2.2, 1.4, 0);
-  panelMesh.rotation.set(0.2, 0, 0);
-  panelMesh.castShadow = true;
-  platformGroup.add(panelMesh);
-
-  // Glowing cyan extraction laser drill beam
-  const laserGeom = new THREE.CylinderGeometry(0.12, 0.12, 11.5, 8, 1, true);
-  const laserMat = new THREE.MeshBasicMaterial({
+  // Subtle scanning sensor light cone (instead of intense laser)
+  const scanGeo = new THREE.ConeGeometry(0.6, 4.0, 16, 1, true);
+  const scanMat = new THREE.MeshBasicMaterial({
     color: 0x00ffc8,
     transparent: true,
-    opacity: 0.8,
+    opacity: 0.08, // extremely soft
     blending: THREE.AdditiveBlending,
     side: THREE.DoubleSide,
     depthWrite: false,
   });
-  const laserMesh = new THREE.Mesh(laserGeom, laserMat);
-  laserMesh.position.set(-5, -1.2, 3.5);
-  laserMesh.rotation.set(0, Math.PI / 6, -Math.PI / 16);
-  platformGroup.add(laserMesh);
+  const scanCone = new THREE.Mesh(scanGeo, scanMat);
+  scanCone.position.y = -2.25;
+  scanCone.rotation.x = Math.PI;
+  probeGroup.add(scanCone);
 
-  group.add(platformGroup);
+  group.add(probeGroup);
 
   // 4. CARGO TRANSPORT DRONES (Living Elements)
   const drone1 = new THREE.Group();
@@ -186,14 +159,16 @@ export function createAsteroidBelt() {
   // Animation frame loop update helper
   const tempObject = new THREE.Object3D();
 
-  const update = (time: number, delta: number) => {
+  const update = (time: number, delta: number, prefersReducedMotion?: boolean) => {
     // 1. Update instanced background asteroids
     asteroidData.forEach((ast, idx) => {
-      ast.rotation.x += ast.rotSpeed.x * delta;
-      ast.rotation.y += ast.rotSpeed.y * delta;
-      ast.rotation.z += ast.rotSpeed.z * delta;
+      if (!prefersReducedMotion) {
+        ast.rotation.x += ast.rotSpeed.x * delta;
+        ast.rotation.y += ast.rotSpeed.y * delta;
+        ast.rotation.z += ast.rotSpeed.z * delta;
+      }
 
-      const wave = Math.sin(time * 0.1 + idx) * 0.02;
+      const wave = prefersReducedMotion ? 0 : Math.sin(time * 0.1 + idx) * 0.02;
       tempObject.position.set(
         ast.position.x,
         ast.position.y + wave,
@@ -207,23 +182,30 @@ export function createAsteroidBelt() {
     });
     instancedMesh.instanceMatrix.needsUpdate = true;
 
-    // 2. Rotate large targeted asteroid
-    largeAstGroup.rotation.y = time * 0.05;
-    largeAstGroup.rotation.z = time * 0.02;
+    if (prefersReducedMotion) {
+      scanCone.scale.x = 1.0;
+      scanCone.scale.z = 1.0;
+      return;
+    }
 
-    // 3. Flicker mining laser drill beam
-    laserMesh.scale.x = 1.0 + Math.sin(time * 40) * 0.15;
-    laserMesh.scale.z = 1.0 + Math.cos(time * 40) * 0.15;
+    // 2. Rotate large targeted asteroid slowly (observatory aesthetic)
+    largeAstGroup.rotation.y = time * 0.01;
+    largeAstGroup.rotation.z = time * 0.004;
+    secondRockMesh.rotation.y = time * 0.008;
 
-    // 4. Animate cargo drones back and forth
-    const t1 = (time * 0.2) % 1.0;
-    const start = new THREE.Vector3(0, 0, -2);
+    // 3. Softly pulse mapping sensor
+    scanCone.scale.x = 1.0 + Math.sin(time * 1.5) * 0.05;
+    scanCone.scale.z = 1.0 + Math.cos(time * 1.5) * 0.05;
+
+    // 4. Animate cargo drones back and forth (slowed down for observatory glide)
+    const t1 = (time * 0.03) % 1.0;
+    const start = new THREE.Vector3(0, 2.5, -2);
     const end = new THREE.Vector3(-10, -1, 5);
     const frac1 = Math.sin(t1 * Math.PI);
     drone1.position.lerpVectors(start, end, frac1);
     drone1.lookAt(end);
 
-    const t2 = ((time + 2.5) * 0.25) % 1.0;
+    const t2 = ((time + 2.5) * 0.04) % 1.0;
     const end2 = new THREE.Vector3(8, 2, -6);
     const frac2 = Math.sin(t2 * Math.PI);
     drone2.position.lerpVectors(start, end2, frac2);
