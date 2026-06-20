@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { GlassModule } from "../components/GlassModule";
+import { WaitlistModal } from "../components/WaitlistModal";
 
 // Dynamic import of the WebGL Space Canvas to bypass SSR issues during Next.js builds
 const SpaceUniverse = dynamic(
@@ -72,6 +73,7 @@ function NavLogo() {
 
 export default function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [isWaitlistOpen, setIsWaitlistOpen] = useState(false);
 
   // Track global scroll height to interpolate 3D camera coordinates across the 9 sections (index 0 to 8)
   useEffect(() => {
@@ -117,6 +119,7 @@ export default function Home() {
         </a>
         <div className="nav-links hidden md:flex">
           <a href="/about">ABOUT</a>
+          <a href="/planet/genesis">PLANET</a>
           <a href="/roadmap">ROADMAP</a>
           <a href="/token">TOKEN</a>
           <a href="/whitepaper">WHITEPAPER</a>
@@ -149,9 +152,14 @@ export default function Home() {
                 A high-fidelity decentralized virtual universe powered by smart contracts and real-time spatial computing, where creators exercise full sovereignty over their virtual land, design complex digital economies, and capture absolute value from their creations.
               </p>
               
-              <button onClick={handleDescend} className="btn-gold">
-                Explore The Universe
-              </button>
+              <div className="flex flex-wrap justify-center gap-4 mt-8 pointer-events-auto">
+                <button onClick={handleDescend} className="btn-gold !mt-0">
+                  Explore The Universe
+                </button>
+                <button onClick={() => setIsWaitlistOpen(true)} className="btn-gold !mt-0 !bg-[#00ffc8] hover:!shadow-[0_0_35px_rgba(0,255,200,0.3)]">
+                  Join Genesis Airdrop
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -395,10 +403,12 @@ export default function Home() {
             <a href="https://x.com/millionmint" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ffc8] transition-colors">X (Twitter)</a>
             <a href="https://t.me/millionmint" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ffc8] transition-colors">Telegram</a>
             <a href="https://github.com/kalyanastin/million-mint-ai-terminal" target="_blank" rel="noopener noreferrer" className="hover:text-[#00ffc8] transition-colors">GitHub</a>
+            <a href="/sitemap.xml" className="hover:text-[#00ffc8] transition-colors">Sitemap</a>
           </div>
         </footer>
 
       </div>
+      <WaitlistModal isOpen={isWaitlistOpen} onClose={() => setIsWaitlistOpen(false)} />
     </main>
   );
 }
