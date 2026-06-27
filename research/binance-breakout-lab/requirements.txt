@@ -1,0 +1,7 @@
+# Million Mint Trading Lab - Python Requirements
+# The core simulation engine (million_mint_framework.py) is implemented using Pure Python Standard Libraries.
+# NO external libraries are required to run the simulation or generate the performance dashboard.
+
+# (Optional) Optional packages for expanded analysis in Jupyter Notebooks:
+jupyter>=1.0.0
+matplotlib>=3.5.0
