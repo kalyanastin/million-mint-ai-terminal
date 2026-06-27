@@ -1,0 +1,20 @@
+{
+  "name": "mcp-studio-examples",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "todo:start": "node todo-server/dist/index.js",
+    "todo:build": "tsc -p todo-server",
+    "weather:start": "node weather-server/dist/index.js",
+    "weather:build": "tsc -p weather-server",
+    "build": "pnpm todo:build && pnpm weather:build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.7.2"
+  }
+}

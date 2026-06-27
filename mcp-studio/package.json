@@ -1,0 +1,22 @@
+{
+  "name": "mcp-studio-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Visual Studio & Ecosystem for Model Context Protocol (MCP) server development",
+  "scripts": {
+    "dev:daemon": "node scripts/mcp-runner-daemon.js",
+    "dev:app": "pnpm --filter desktop dev",
+    "dev": "concurrently --kill-others \"pnpm dev:daemon\" \"pnpm dev:app\"",
+    "build": "pnpm -r build",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md,css}\"",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "typescript": "^5.7.2",
+    "eslint": "^8.57.0",
+    "prettier": "^3.4.2",
+    "ws": "^8.18.0"
+  }
+}
