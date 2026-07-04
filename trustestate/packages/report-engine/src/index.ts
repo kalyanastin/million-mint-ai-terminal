@@ -7,3 +7,5 @@ export { compileSectionsStage } from "./core/pipeline/sectionStage";
 export { assembleLayoutStage } from "./core/pipeline/layoutStage";
 export { verifyReportStage } from "./core/pipeline/verificationStage";
 export { exportReportStage } from "./core/pipeline/exportStage";
+export { validatePageModel, validatePageModelOrThrow } from "./core/validator/pageValidator";
+export { renderPageModelToHtml } from "./core/renderer/htmlRenderer";
