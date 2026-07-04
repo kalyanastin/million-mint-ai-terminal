@@ -9,17 +9,19 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@trustestate/database": "workspace:*",
-    "@trustestate/shared": "workspace:*",
     "@trustestate/identity-engine": "workspace:*",
+    "@trustestate/shared": "workspace:*",
     "zod": "^3"
   },
   "devDependencies": {
     "@trustestate/typescript-config": "workspace:*",
     "@types/node": "^22",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.9"
   }
 }
