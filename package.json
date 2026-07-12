@@ -1,0 +1,31 @@
+{
+  "name": "vecoris-workspace",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "clean": "turbo clean"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^8",
+    "next": "^15",
+    "prettier": "^3",
+    "react": "^19",
+    "react-dom": "^19",
+    "turbo": "^2.10.2",
+    "typescript": "^5",
+    "vitest": "^4.1.10"
+  },
+  "pnpm": {
+    "overrides": {
+      "postcss": "^8.5.10"
+    }
+  },
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": "20.x"
+  }
+}
