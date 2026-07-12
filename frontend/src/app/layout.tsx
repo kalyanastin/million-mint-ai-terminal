@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { GlobalSpaceLayout } from "../components/GlobalSpaceLayout";
+import { SpaceProvider } from "../context/SpaceContext";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -91,7 +92,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen antialiased bg-black text-white">
-        <GlobalSpaceLayout>{children}</GlobalSpaceLayout>
+        <SpaceProvider>
+          <GlobalSpaceLayout>{children}</GlobalSpaceLayout>
+        </SpaceProvider>
       </body>
     </html>
   );

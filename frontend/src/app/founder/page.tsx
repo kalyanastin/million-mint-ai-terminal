@@ -47,7 +47,7 @@ export default function FounderPage() {
       <div className="scroll-wrapper pt-32 pb-20">
         <div className="px-4 w-full flex justify-center">
           <GlassModule className="max-w-[1100px] pointer-events-auto">
-            
+
             <div className="eyebrow">Founder Profile // Kalyan Chowdary</div>
             <h1 className="section-title text-center text-white mb-2" style={{ fontSize: "clamp(32px, 5vw, 60px)" }}>
               KALYAN CHOWDARY
@@ -57,7 +57,7 @@ export default function FounderPage() {
             </p>
 
             <div className="space-y-8 font-mono text-sm leading-relaxed text-zinc-300">
-              
+
               {/* SECTION 1: WHO I AM */}
               <div className="border-b border-[rgba(255,255,255,0.06)] pb-8">
                 <h2 className="text-xl font-bold text-[#00ffc8] uppercase tracking-wider mb-4">1. Who I Am</h2>
@@ -132,8 +132,8 @@ export default function FounderPage() {
                 </p>
                 <ul className="list-decimal pl-6 mt-4 space-y-3 text-zinc-400 font-mono text-xs">
                   <li className="pl-2">
-                    <button 
-                      onClick={() => setIsWaitlistOpen(true)} 
+                    <button
+                      onClick={() => setIsWaitlistOpen(true)}
                       className="text-left hover:text-[#00ffc8] transition-colors cursor-pointer focus:outline-none"
                     >
                       <strong className="text-white underline">Join the Genesis Waitlist:</strong> Register your email to receive future ecosystem update logs and potential early rewards announcements.
@@ -163,7 +163,7 @@ export default function FounderPage() {
                 <blockquote className="border-l-2 border-[#f5c842] pl-4 italic text-zinc-400 my-6">
                   "For too long, the internet has operated on a landlord-tenant model where creators build value, only to be controlled by centralized platforms. Million Mint is an experiment in authentic digital ownership and community governance. Grounded in concrete execution, we invite you to explore this next generation of virtual systems with us."
                 </blockquote>
-                
+
                 {/* Social links grid */}
                 <div className="mt-8 pt-6 border-t border-[rgba(255,255,255,0.06)]">
                   <h4 className="text-white font-bold uppercase mb-4">Connect with the Founder:</h4>

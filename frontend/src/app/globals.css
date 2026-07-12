@@ -284,3 +284,267 @@ nav {
     transform: none;
 }
 
+/* ── CIVILIZATION OPERATING SYSTEM (COS) HUD STYLES ── */
+
+.cos-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    font-family: 'Space Mono', monospace;
+}
+
+.cos-interactive {
+    pointer-events: auto;
+}
+
+/* ── HUD LOCK-ON SCAN BOX ── */
+.scan-locked-box {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border: 1px dashed rgba(0, 255, 200, 0.4);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    box-shadow: 0 0 15px rgba(0, 255, 200, 0.1);
+}
+
+.scan-locked-box::before, .scan-locked-box::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-color: #00ffc8;
+    border-style: solid;
+}
+
+.scan-locked-box::before {
+    top: -2px;
+    left: -2px;
+    border-width: 2px 0 0 2px;
+}
+
+.scan-locked-box::after {
+    bottom: -2px;
+    right: -2px;
+    border-width: 0 2px 2px 0;
+}
+
+.scan-locked-label {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: #00ffc8;
+    background: rgba(0,0,0,0.85);
+    padding: 2px 6px;
+    border: 1px solid rgba(0,255,200,0.3);
+    text-transform: uppercase;
+}
+
+/* ── SCANNER LASER LINE SWEEP ── */
+.scan-line {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, transparent, #00ffc8, transparent);
+    animation: scanner-sweep 2.5s infinite linear;
+    opacity: 0.35;
+}
+
+@keyframes scanner-sweep {
+    0% { top: 0%; }
+    50% { top: 100%; }
+    100% { top: 0%; }
+}
+
+/* ── COS LAYER SELECTOR PANEL ── */
+.cos-layer-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(4, 4, 8, 0.85);
+    border: 1px solid rgba(255,255,255,0.06);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    padding: 16px;
+    border-radius: 6px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    max-height: 480px;
+    overflow-y: auto;
+}
+
+.cos-layer-btn {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.01);
+    border-radius: 3px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cos-layer-btn:hover {
+    background: rgba(255,255,255,0.03);
+    color: #ffffff;
+    border-color: rgba(255,255,255,0.15);
+    padding-left: 15px;
+}
+
+.cos-layer-btn.active {
+    background: rgba(0, 255, 200, 0.08);
+    color: #00ffc8;
+    border-color: rgba(0, 255, 200, 0.3);
+    box-shadow: 0 0 10px rgba(0,255,200,0.05);
+}
+
+/* ── OPERATIONAL TELEMETRY SIDEBAR ── */
+.cos-sidebar {
+    background: rgba(3, 3, 6, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(35px);
+    -webkit-backdrop-filter: blur(35px);
+    box-shadow: -20px 0 60px rgba(0, 0, 0, 0.9);
+    height: calc(100vh - 180px);
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+}
+
+.cos-sidebar-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 20px;
+}
+
+.cos-sidebar-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.cos-sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.cos-data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    border-bottom: 1px dashed rgba(255,255,255,0.04);
+    padding-bottom: 8px;
+}
+
+.cos-data-label {
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+.cos-data-value {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.cos-terminal-log {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255,255,255,0.03);
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 9px;
+    color: #ffd080;
+    max-height: 120px;
+    overflow-y: auto;
+    line-height: 1.5;
+}
+
+/* ── DYNAMIC TELEMETRY STATE COLORS ── */
+.status-indicator {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+.status-nominal { background-color: #00ffc8; box-shadow: 0 0 8px #00ffc8; }
+.status-warning { background-color: #ffd080; box-shadow: 0 0 8px #ffd080; }
+.status-alert { background-color: #ff3b30; box-shadow: 0 0 8px #ff3b30; }
+
+/* ── MILLION MINT AI ADVISOR ── */
+.cos-ai-advisor {
+    background: rgba(4, 4, 8, 0.88);
+    border: 1px solid rgba(0, 255, 200, 0.15);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 15px rgba(0, 255, 200, 0.05);
+    border-radius: 8px;
+    padding: 20px;
+    width: 440px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cos-ai-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(0, 255, 200, 0.1);
+    padding-bottom: 8px;
+}
+
+.cos-ai-input {
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(0, 255, 200, 0.2);
+    border-radius: 4px;
+    color: #ffffff;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    padding: 8px 12px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.cos-ai-input:focus {
+    border-color: #00ffc8;
+    box-shadow: 0 0 10px rgba(0,255,200,0.15);
+}
+
+/* ── SIMULATOR SCREEN GLITCH / SOLAR FLARE ── */
+.cos-glitch-active {
+    animation: screen-shake 0.4s infinite;
+}
+
+.cos-glitch-active::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 59, 48, 0.04);
+    z-index: 9999;
+    pointer-events: none;
+}
+
+@keyframes screen-shake {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    20% { transform: translate(-2px, 1px) rotate(-0.5deg); }
+    40% { transform: translate(1px, -1px) rotate(0.5deg); }
+    60% { transform: translate(-1px, 2px) rotate(0deg); }
+    80% { transform: translate(2px, 1px) rotate(0.5deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+}
+

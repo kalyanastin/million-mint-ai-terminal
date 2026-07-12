@@ -669,22 +669,59 @@ export function createPlanet(
   const radius = sizes[type];
 
   if (type === "earth") {
-    // 1. Surface PBR MeshStandardMaterial with bump mapping
+    // 1. Custom Day/Night Terminator ShaderMaterial
     const earthDay = createProceduralTexture("earth-day");
     const earthNight = createProceduralTexture("earth-night");
-    const earthSpec = createProceduralTexture("earth-specular");
     const earthBump = createProceduralTexture("earth-bump");
 
-    const earthMat = new THREE.MeshStandardMaterial({
-      map: earthDay,
-      roughnessMap: earthSpec,
-      roughness: 0.7,
-      metalness: 0.0,
-      bumpMap: earthBump,
-      bumpScale: 0.25,
-      emissiveMap: earthNight,
-      emissive: new THREE.Color(0xffd090),
-      emissiveIntensity: 0.4,
+    const earthMat = new THREE.ShaderMaterial({
+      uniforms: {
+        dayTexture: { value: earthDay },
+        nightTexture: { value: earthNight },
+        bumpTexture: { value: earthBump },
+        sunDirection: { value: new THREE.Vector3(200, 50, 300).normalize() }
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        varying vec3 vNormal;
+        void main() {
+          vUv = uv;
+          vNormal = normalize(vec3(modelMatrix * vec4(normal, 0.0)));
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D dayTexture;
+        uniform sampler2D nightTexture;
+        uniform sampler2D bumpTexture;
+        uniform vec3 sunDirection;
+        varying vec2 vUv;
+        varying vec3 vNormal;
+
+        void main() {
+          vec3 normal = normalize(vNormal);
+          vec3 sunDir = normalize(sunDirection);
+          
+          float dotNL = dot(normal, sunDir);
+
+          vec4 dayColor = texture2D(dayTexture, vUv);
+          vec4 nightColor = texture2D(nightTexture, vUv);
+
+          // Standard diffuse lighting + ambient base for daytime hemisphere
+          float diffuse = max(0.0, dotNL);
+          vec3 dayLit = dayColor.rgb * (diffuse * vec3(1.0, 0.98, 0.95) + vec3(0.04, 0.04, 0.08));
+
+          // Interpolation ramp across the terminator edge
+          float intensity = smoothstep(-0.15, 0.15, dotNL);
+          vec3 finalColor = mix(nightColor.rgb * 1.5, dayLit, intensity);
+
+          // Add a beautiful warm glowing orange sunset ring along the terminator line
+          float sunsetEdge = smoothstep(0.12, 0.0, abs(dotNL));
+          vec3 sunsetGlow = vec3(0.85, 0.28, 0.05) * sunsetEdge * 0.32;
+
+          gl_FragColor = vec4(finalColor + sunsetGlow, 1.0);
+        }
+      `
     });
 
     const body = new THREE.Mesh(new THREE.SphereGeometry(radius, 64, 64), earthMat);

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
+import { useSpace } from "../context/SpaceContext";
 
 const SpaceUniverse = dynamic(
   () => import("./SpaceUniverse").then((mod) => mod.SpaceUniverse),
@@ -12,6 +13,13 @@ const SpaceUniverse = dynamic(
 export function GlobalSpaceLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [progress, setProgress] = useState(0);
+  const {
+    explorerMode,
+    activeLayer,
+    setHoveredAsset,
+    setSelectedAsset,
+    setYear
+  } = useSpace();
 
   // Sync route path to background progress
   useEffect(() => {
@@ -35,12 +43,13 @@ export function GlobalSpaceLayout({ children }: { children: React.ReactNode }) {
     if (pathname !== "/") return;
 
     const handleScroll = () => {
+      if (explorerMode) return; // Ignore scrolling updates in Explorer Mode
+
       const scrolled = window.scrollY;
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
       if (maxScroll <= 0) return;
       
       const scrollFrac = scrolled / maxScroll;
-      // Interpolate between 0 (Hero) and 8 (Observatory lookback)
       setProgress(scrollFrac * 8);
     };
 
@@ -50,7 +59,7 @@ export function GlobalSpaceLayout({ children }: { children: React.ReactNode }) {
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [pathname]);
+  }, [pathname, explorerMode]);
 
   return (
     <>
@@ -62,7 +71,14 @@ export function GlobalSpaceLayout({ children }: { children: React.ReactNode }) {
             CONNECTING ORBITAL TELEMETRY...
           </div>
         }>
-          <SpaceUniverse scrollProgress={progress} />
+          <SpaceUniverse
+            scrollProgress={progress}
+            explorerMode={explorerMode}
+            activeLayer={activeLayer}
+            onAssetHover={setHoveredAsset}
+            onAssetClick={setSelectedAsset}
+            onTimelineUpdate={setYear}
+          />
         </Suspense>
       </div>
       
