@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "pnpm install",
-  "buildCommand": "pnpm --filter @vecoris/web build",
+  "buildCommand": "pnpm --filter @vecoris/database db:generate && pnpm --filter @vecoris/web build",
   "outputDirectory": "vecoris-web/.next"
 }
